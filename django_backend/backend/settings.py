@@ -14,7 +14,10 @@ from pathlib import Path
 import os
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
-load_dotenv()
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, ".env")) # forces Django to find the .env file
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
