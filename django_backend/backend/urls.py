@@ -15,15 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from cyberintel import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    # Test endpoints
-    path('api/hello/', views.hello_world, name='hello'),
-    path('api/test-db/', views.test_db_connection, name='test_db'),
-    path('api/threats/', views.get_threats, name='get_threats'),
-    path('api/threats/stats/', views.get_threat_stats, name='threat_stats'),
+    path('api/', include('cyberintel.urls'))
 ]
