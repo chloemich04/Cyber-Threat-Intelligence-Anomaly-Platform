@@ -2,6 +2,8 @@ from django.shortcuts import render
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from .models import ThreatIndicator
+from django.db import connection
 
 from .models import Threat, CweSoftwareDevelopment, NvdDataEnriched
 from .serializers import ThreatSerializer, CweSoftwareDevelopmentSerializer, NvdDataEnrichedSerializer
