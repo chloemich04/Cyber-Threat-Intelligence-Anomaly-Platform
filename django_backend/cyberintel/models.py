@@ -20,3 +20,65 @@ class Threat(models.Model):
 
     def __str__(self):
         return f"{self.threat_type} from {self.source}"
+
+
+class CweSoftwareDevelopment(models.Model):
+    cwe_id = models.TextField(blank=True, null=False,primary_key=True)
+    name = models.TextField(blank=True, null=False)
+    weakness_abstraction = models.TextField(blank=True, null=False)
+    status = models.TextField(blank=True, null=False)
+    description = models.TextField(blank=True, null=False)
+    extended_description = models.TextField(blank=True, null=False)
+    related_weaknesses = models.TextField(blank=True, null=False)
+    weakness_ordinalities = models.TextField(blank=True, null=False)
+    applicable_platforms = models.TextField(blank=True, null=False)
+    background_details = models.TextField(blank=True, null=False)
+    alternate_terms = models.TextField(blank=True, null=False)
+    modes_of_introduction = models.TextField(blank=True, null=False)
+    exploitation_factors = models.TextField(blank=True, null=False)
+    likelihood_of_exploit = models.TextField(blank=True, null=False)
+    common_consequences = models.TextField(blank=True, null=False)
+    detection_methods = models.TextField(blank=True, null=False)
+    potential_mitigations = models.TextField(blank=True, null=False)
+    observed_examples = models.TextField(blank=True, null=False)
+    functional_areas = models.TextField(blank=True, null=False)
+    affected_resources = models.TextField(blank=True, null=False)
+    taxonomy_mappings = models.TextField(blank=True, null=False)
+    related_attack_patterns = models.TextField(blank=True, null=False)
+    notes = models.TextField(blank=True, null=False)
+
+    class Meta:
+        #managed = False
+        db_table = 'cwe_software_development'
+
+class NvdDataEnriched(models.Model):
+    id = models.TextField(blank=True, null=False,primary_key=True)
+    published = models.TextField(blank=True, null=False)
+    vulnstatus = models.TextField(db_column='vulnStatus', blank=True, null=False)  # Field name made lowercase.
+    lang = models.TextField(blank=True, null=False)
+    value = models.TextField(blank=True, null=False)
+    source = models.TextField(blank=True, null=False)
+    type = models.TextField(blank=True, null=False)
+    url = models.TextField(blank=True, null=False)
+    cwe_id = models.TextField(blank=True, null=False)
+    name = models.TextField(blank=True, null=False)
+    weakness_abstraction = models.TextField(blank=True, null=False)
+    status = models.TextField(blank=True, null=False)
+    description = models.TextField(blank=True, null=False)
+    extended_description = models.TextField(blank=True, null=False)
+    alternate_terms = models.TextField(blank=True, null=False)
+    modes_of_introduction = models.TextField(blank=True, null=False)
+    common_consequences = models.TextField(blank=True, null=False)
+    detection_methods = models.TextField(blank=True, null=False)
+    potential_mitigations = models.TextField(blank=True, null=False)
+    observed_examples = models.TextField(blank=True, null=False)
+    functional_areas = models.TextField(blank=True, null=False)
+    affected_resources = models.TextField(blank=True, null=False)
+    taxonomy_mappings = models.TextField(blank=True, null=False)
+    related_attack_patterns = models.TextField(blank=True, null=False)
+    notes = models.TextField(blank=True, null=False)
+    cwe_source = models.TextField(blank=True, null=False)
+
+    class Meta:
+        #managed = False
+        db_table = 'nvd_data_enriched'
