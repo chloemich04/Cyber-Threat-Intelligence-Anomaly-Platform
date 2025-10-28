@@ -40,7 +40,6 @@ def test_connection():
         
         print("Next steps:")
         print("  1. Run: python manage.py migrate")
-        print("  2. Run: python manage.py populate_dummy_data")
         print("  3. Run: python manage.py runserver")
         print("  4. Visit: http://localhost:8000/api/test-db/")
         

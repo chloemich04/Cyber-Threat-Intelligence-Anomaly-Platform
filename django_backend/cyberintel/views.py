@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import ThreatIndicator
+from .llm_service import ThreatPredictionService
 from django.db import connection
 
 # Create your views here.
@@ -96,5 +97,110 @@ def get_threat_stats(request):
     except Exception as e:
         return Response({
             "status": "error",
+            "message": str(e)
+        }, status=500)
+
+
+@api_view(['GET'])
+def get_dummy_cve_data(request):
+    """Get dummy CVE data from file"""
+    try:
+        prediction_service = ThreatPredictionService()
+        cve_data = prediction_service.get_threat_data()
+        
+        return Response({
+            "status": "success",
+            "count": len(cve_data),
+            "data": cve_data
+        })
+    except Exception as e:
+        return Response({
+            "status": "error",
+            "message": str(e)
+        }, status=500)
+
+
+@api_view(['GET'])
+def get_threat_predictions(request):
+    """Get AI-generated threat predictions using dummy CVE data"""
+    try:
+        timeframe = request.GET.get('timeframe', '30 days')
+        prediction_service = ThreatPredictionService()
+        predictions = prediction_service.generate_predictions_from_dummy_data(timeframe)
+        
+        return Response({
+            "status": "success",
+            "predictions": predictions
+        })
+    except Exception as e:
+        return Response({
+            "status": "error",
+            "message": str(e)
+        }, status=500)
+
+
+@api_view(['GET'])
+def get_dummy_cve_stats(request):
+    """Get statistics about dummy CVE data"""
+    try:
+        prediction_service = ThreatPredictionService()
+        cve_data = prediction_service.get_threat_data()
+        
+        if not cve_data:
+            return Response({
+                "status": "error",
+                "message": "No CVE data available"
+            }, status=404)
+        
+        # Count by severity
+        severity_stats = {}
+        for severity in ['Critical', 'High', 'Medium', 'Low']:
+            count = sum(1 for cve in cve_data if cve.get('severity') == severity)
+            severity_stats[severity] = count
+        
+        # Count by threat type
+        threat_type_stats = {}
+        for cve in cve_data:
+            threat_type = cve.get('threat_type', 'Unknown')
+            threat_type_stats[threat_type] = threat_type_stats.get(threat_type, 0) + 1
+        
+        # Count by vendor
+        vendor_stats = {}
+        for cve in cve_data:
+            vendor = cve.get('vendor', 'Unknown')
+            vendor_stats[vendor] = vendor_stats.get(vendor, 0) + 1
+        
+        return Response({
+            "status": "success",
+            "total_cves": len(cve_data),
+            "by_severity": severity_stats,
+            "by_threat_type": threat_type_stats,
+            "by_vendor": vendor_stats
+        })
+    except Exception as e:
+        return Response({
+            "status": "error",
+            "message": str(e)
+        }, status=500)
+
+
+@api_view(['GET', 'POST'])
+def generate_predictions(request):
+    """Legacy endpoint - redirects to CVE-based predictions"""
+    try:
+        timeframe = request.GET.get('timeframe', '30 days')
+        prediction_service = ThreatPredictionService()
+        predictions = prediction_service.generate_predictions_from_dummy_data(timeframe)
+        
+        return Response({
+            "status": "success",
+            "success": True,
+            "predictions": predictions
+        })
+    except Exception as e:
+        return Response({
+            "status": "error",
+            "success": False,
+            "error": str(e),
             "message": str(e)
         }, status=500)

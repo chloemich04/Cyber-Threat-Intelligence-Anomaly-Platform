@@ -3,6 +3,7 @@ import LossBySectorBarChart from './components/LossBySectorBarChart';
 import Navigation from './components/Navigation';
 import AboutUs from './components/AboutUs';
 import Contact from './components/Contact';
+import Predictions from './components/Predictions';
 
 export default function App(){
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -13,6 +14,8 @@ export default function App(){
         return <AboutUs />;
       case 'contact':
         return <Contact />;
+      case 'predictions':
+        return <Predictions />;
       case 'dashboard':
       default:
         return (

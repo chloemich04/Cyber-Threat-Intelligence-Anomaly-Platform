@@ -26,4 +26,12 @@ urlpatterns = [
     path('api/test-db/', views.test_db_connection, name='test_db'),
     path('api/threats/', views.get_threats, name='get_threats'),
     path('api/threats/stats/', views.get_threat_stats, name='threat_stats'),
+    
+    # Dummy CVE data endpoints
+    path('api/cve/data/', views.get_dummy_cve_data, name='get_dummy_cve_data'),
+    path('api/cve/stats/', views.get_dummy_cve_stats, name='get_dummy_cve_stats'),
+    path('api/cve/predictions/', views.get_threat_predictions, name='get_threat_predictions'),
+    
+    # Legacy prediction endpoint (for frontend compatibility)
+    path('api/predictions/generate/', views.generate_predictions, name='generate_predictions'),
 ]

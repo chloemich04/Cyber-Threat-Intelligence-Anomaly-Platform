@@ -29,22 +29,10 @@ const Navigation = ({ onNavigate, currentPage }) => {
             Dashboard
           </button>
           <button 
-            onClick={() => handleNavigation('threats')} 
-            className={`nav-link ${currentPage === 'threats' ? 'active' : ''}`}
+            onClick={() => handleNavigation('predictions')} 
+            className={`nav-link ${currentPage === 'predictions' ? 'active' : ''}`}
           >
-            Threat Intelligence
-          </button>
-          <button 
-            onClick={() => handleNavigation('analytics')} 
-            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
-          >
-            Analytics
-          </button>
-          <button 
-            onClick={() => handleNavigation('reports')} 
-            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
-          >
-            Reports
+            Predictions
           </button>
           <button 
             onClick={() => handleNavigation('about')} 
@@ -80,22 +68,10 @@ const Navigation = ({ onNavigate, currentPage }) => {
             Dashboard
           </button>
           <button 
-            onClick={() => handleNavigation('threats')} 
-            className={`nav-link ${currentPage === 'threats' ? 'active' : ''}`}
+            onClick={() => handleNavigation('predictions')} 
+            className={`nav-link ${currentPage === 'predictions' ? 'active' : ''}`}
           >
-            Threat Intelligence
-          </button>
-          <button 
-            onClick={() => handleNavigation('analytics')} 
-            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
-          >
-            Analytics
-          </button>
-          <button 
-            onClick={() => handleNavigation('reports')} 
-            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
-          >
-            Reports
+            Predictions
           </button>
           <button 
             onClick={() => handleNavigation('about')} 
