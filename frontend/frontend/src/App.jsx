@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import LossBySectorBarChart from './components/LossBySectorBarChart';
 import Navigation from './components/Navigation';
 import AboutUs from './components/AboutUs';
 import Contact from './components/Contact';
+import ThreatIntelligence from './components/ThreatIntelligence';
+import DashboardPDFExport from './components/DashboardPDFExport';
 
 export default function App(){
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -13,12 +14,14 @@ export default function App(){
         return <AboutUs />;
       case 'contact':
         return <Contact />;
+      case 'threat-intelligence':
+        return <ThreatIntelligence />;
       case 'dashboard':
       default:
         return (
           <>
             <header>
-        <div className="title">Cyber Threat Intelligence & Anomaly Detection Platform</div>
+        <div className="title">Cyber Threat Intelligence</div>
         <div className="subtitle">
           This platform shows basic insight on cyber attacks with helpful visuals like maps, charts, and tables.
         </div>
@@ -44,7 +47,7 @@ export default function App(){
             <option>Risk Level</option><option>High</option><option>Medium</option><option>Low</option>
           </select>
 
-          <button className="button primary" type="button">Export PDF/CSV</button>
+          <DashboardPDFExport />
           <button className="button" type="button">Settings</button>
         </div>
       </header>
@@ -68,26 +71,14 @@ export default function App(){
           <div className="legend"><span>Low</span><span className="bar" aria-hidden="true"></span><span>High</span></div>
         </section>
 
-        {/* Charts */}
+        {/* Charts Section - Historical Data (Not AI Predictions) */}
         <section className="panel charts-full-width">
-          <h3>Forecast & Charts</h3>
+          <h3>Historical Threat Analytics</h3>
+          <div className="subtitle" style={{marginBottom: '1rem', color: 'var(--muted)'}}>
+            Current and historical threat data (For AI predictions, see Threat Intelligence page)
+          </div>
           <div className="charts">
-            <div className="chart-box" aria-label="Forecast line chart">
-              <div className="chart-header">
-                <h3 className="chart-title">Forecast (Incidents / Losses)</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  📈 Line Chart Coming Soon
-                </div>
-              </div>
-            </div>
-            
-            <div className="chart-box" aria-label="Loss amount by sector bar chart">
-              <LossBySectorBarChart />
-            </div>
-            
-            <div className="chart-box" aria-label="Incident severity distribution">
+            <div className="chart-box" aria-label="Incident severity distribution" data-dashboard-chart-id="incident-severity">
               <div className="chart-header">
                 <h3 className="chart-title">Incident Severity Distribution</h3>
               </div>
@@ -98,7 +89,7 @@ export default function App(){
               </div>
             </div>
             
-            <div className="chart-box" aria-label="Top threat types ranked">
+            <div className="chart-box" aria-label="Top threat types ranked" data-dashboard-chart-id="top-threats">
               <div className="chart-header">
                 <h3 className="chart-title">Top Threat Types</h3>
               </div>
@@ -109,7 +100,7 @@ export default function App(){
               </div>
             </div>
             
-            <div className="chart-box" aria-label="Breach type distribution">
+            <div className="chart-box" aria-label="Breach type distribution" data-dashboard-chart-id="breach-types">
               <div className="chart-header">
                 <h3 className="chart-title">Breach Type Distribution</h3>
               </div>
@@ -120,13 +111,35 @@ export default function App(){
               </div>
             </div>
             
-            <div className="chart-box" aria-label="Top vulnerable technologies">
+            <div className="chart-box" aria-label="Top vulnerable technologies" data-dashboard-chart-id="vulnerable-tech">
               <div className="chart-header">
                 <h3 className="chart-title">Top Vulnerable Technologies</h3>
               </div>
               <div className="chart-content">
                 <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
                   📊 Bar Chart Coming Soon
+                </div>
+              </div>
+            </div>
+            
+            <div className="chart-box" aria-label="Attack vector trends" data-dashboard-chart-id="attack-vectors">
+              <div className="chart-header">
+                <h3 className="chart-title">Attack Vector Trends</h3>
+              </div>
+              <div className="chart-content">
+                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                  📈 Line Chart Coming Soon
+                </div>
+              </div>
+            </div>
+            
+            <div className="chart-box" aria-label="Response time metrics" data-dashboard-chart-id="response-times">
+              <div className="chart-header">
+                <h3 className="chart-title">Incident Response Times</h3>
+              </div>
+              <div className="chart-content">
+                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                  ⏱️ Metrics Coming Soon
                 </div>
               </div>
             </div>

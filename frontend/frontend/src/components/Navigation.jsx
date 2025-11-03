@@ -29,10 +29,10 @@ const Navigation = ({ onNavigate, currentPage }) => {
             Dashboard
           </button>
           <button 
-            onClick={() => handleNavigation('threats')} 
-            className={`nav-link ${currentPage === 'threats' ? 'active' : ''}`}
+            onClick={() => handleNavigation('threat-intelligence')} 
+            className={`nav-link ${currentPage === 'threat-intelligence' ? 'active' : ''}`}
           >
-            Threat Intelligence
+            AI Threat Intelligence
           </button>
           <button 
             onClick={() => handleNavigation('analytics')} 
@@ -80,10 +80,10 @@ const Navigation = ({ onNavigate, currentPage }) => {
             Dashboard
           </button>
           <button 
-            onClick={() => handleNavigation('threats')} 
-            className={`nav-link ${currentPage === 'threats' ? 'active' : ''}`}
+            onClick={() => handleNavigation('threat-intelligence')} 
+            className={`nav-link ${currentPage === 'threat-intelligence' ? 'active' : ''}`}
           >
-            Threat Intelligence
+            AI Threat Intelligence
           </button>
           <button 
             onClick={() => handleNavigation('analytics')} 

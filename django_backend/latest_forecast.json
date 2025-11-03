@@ -1,0 +1,151 @@
+{
+  "forecast_horizon_weeks": 4,
+  "predictions": [
+    {
+      "region": "WORLDWIDE",
+      "week_start": "2025-11-10",
+      "expected_count": 15,
+      "expected_count_ci": [
+        8,
+        22
+      ],
+      "spike_probability": 0.18,
+      "spike_threshold_pct": 0.2,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2013-1966",
+          "score": 0.25
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2021-35050",
+          "score": 0.2
+        },
+        {
+          "signal_type": "country",
+          "id": "AU",
+          "score": 0.15
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2020-26801",
+          "score": 0.1
+        }
+      ],
+      "explanation": "After a sharp drop in early November, global threat counts are expected to partially rebound toward the prior baseline. Historical volatility and recurring CVEs such as CVE-2013-1966 and CVE-2021-35050 suggest moderate recovery but no major spike.",
+      "confidence": 0.74
+    },
+    {
+      "region": "WORLDWIDE",
+      "week_start": "2025-11-17",
+      "expected_count": 18,
+      "expected_count_ci": [
+        10,
+        26
+      ],
+      "spike_probability": 0.22,
+      "spike_threshold_pct": 0.2,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2013-3178",
+          "score": 0.22
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2021-35049",
+          "score": 0.18
+        },
+        {
+          "signal_type": "country",
+          "id": "US",
+          "score": 0.15
+        },
+        {
+          "signal_type": "tag",
+          "id": "exploit",
+          "score": 0.1
+        }
+      ],
+      "explanation": "Gradual normalization is projected as activity resumes across multiple regions, particularly the US and AU. Recurrent exploitation of older CVEs indicates steady but contained threat levels.",
+      "confidence": 0.72
+    },
+    {
+      "region": "WORLDWIDE",
+      "week_start": "2025-11-24",
+      "expected_count": 21,
+      "expected_count_ci": [
+        12,
+        30
+      ],
+      "spike_probability": 0.27,
+      "spike_threshold_pct": 0.2,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2021-35048",
+          "score": 0.2
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2020-26801",
+          "score": 0.18
+        },
+        {
+          "signal_type": "country",
+          "id": "CN",
+          "score": 0.15
+        },
+        {
+          "signal_type": "tag",
+          "id": "vulnerability",
+          "score": 0.1
+        }
+      ],
+      "explanation": "By late November, threat counts are expected to return near the long-term mean as scanning and exploit activity from CN and AU sources increase. The persistence of 2021 CVEs supports a moderate upward trend.",
+      "confidence": 0.7
+    },
+    {
+      "region": "WORLDWIDE",
+      "week_start": "2025-12-01",
+      "expected_count": 23,
+      "expected_count_ci": [
+        14,
+        33
+      ],
+      "spike_probability": 0.31,
+      "spike_threshold_pct": 0.2,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2013-3178",
+          "score": 0.22
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2021-35050",
+          "score": 0.2
+        },
+        {
+          "signal_type": "country",
+          "id": "GB",
+          "score": 0.15
+        },
+        {
+          "signal_type": "tag",
+          "id": "exploit",
+          "score": 0.1
+        }
+      ],
+      "explanation": "Seasonal recovery and recurring exploitation of legacy CVEs point to a return toward typical global activity levels. Slightly elevated spike probability reflects historical end-of-quarter surges in exploit attempts.",
+      "confidence": 0.69
+    }
+  ],
+  "metadata": {
+    "model": "gpt-5-2025-01-01-preview",
+    "temperature": 0,
+    "aggregation_method": "weekly_count_by_country"
+  },
+  "generated_at": "2025-11-03T12:56:09.568348"
+}
