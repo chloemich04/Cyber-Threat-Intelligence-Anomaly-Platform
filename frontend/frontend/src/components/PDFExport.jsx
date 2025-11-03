@@ -139,24 +139,43 @@ const PDFExport = ({ forecastData }) => {
           }
           yPosition += 7;
 
-          // Table headers
+          // Table with borders
+          const colWidths = [30, 25, 25, 25, 25];
+          const headers = ['Week Start', 'Expected', 'CI Range', 'Spike Risk', 'Confidence'];
+          const tableStartY = yPosition;
+          let xPos = margin;
+          
+          // Draw table header background
+          pdf.setFillColor(240, 240, 240);
+          pdf.rect(margin, yPosition - 4, contentWidth, 6, 'F');
+          
+          // Draw header borders
+          pdf.setDrawColor(150, 150, 150);
+          pdf.setLineWidth(0.3);
+          
+          // Header text
           pdf.setFontSize(9);
           pdf.setTextColor(0, 0, 0);
           pdf.setFont(undefined, 'bold');
           
-          const colWidths = [30, 25, 25, 25, 25];
-          const headers = ['Week Start', 'Expected', 'CI Range', 'Spike Risk', 'Confidence'];
-          let xPos = margin;
-          
           headers.forEach((header, i) => {
+            // Vertical lines
+            pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
             if (header && typeof header === 'string') {
-              pdf.text(header, xPos, yPosition);
+              pdf.text(header, xPos + 2, yPosition);
             }
             xPos += colWidths[i];
           });
+          // Last vertical line
+          pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
+          
+          // Horizontal lines for header
+          pdf.line(margin, yPosition - 4, margin + contentWidth, yPosition - 4);
+          pdf.line(margin, yPosition + 2, margin + contentWidth, yPosition + 2);
+          
           yPosition += 6;
 
-          // Table rows
+          // Table rows with borders
           pdf.setFont(undefined, 'normal');
           countryPredictions.forEach((pred, idx) => {
             checkPageBreak(7);
@@ -170,12 +189,20 @@ const PDFExport = ({ forecastData }) => {
               pred.confidence != null ? `${(pred.confidence * 100).toFixed(0)}%` : 'N/A'
             ];
 
+            // Draw row borders
             rowData.forEach((data, i) => {
+              // Vertical line
+              pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
               if (data && typeof data === 'string') {
-                pdf.text(data, xPos, yPosition);
+                pdf.text(data, xPos + 2, yPosition);
               }
               xPos += colWidths[i];
             });
+            // Last vertical line
+            pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
+            // Horizontal line
+            pdf.line(margin, yPosition + 2, margin + contentWidth, yPosition + 2);
+            
             yPosition += 6;
           });
 
@@ -235,7 +262,7 @@ const PDFExport = ({ forecastData }) => {
         yPosition += 10;
       }
 
-      // Capture and include selected charts
+      // Capture and include selected charts in 2-column layout
       const chartConfigs = [
         { id: 'loss-by-sector', option: 'includeLossBySector', title: 'Loss by Sector' },
         { id: 'threat-severity', option: 'includeThreatSeverity', title: 'Predicted Threat Severity' },
@@ -244,32 +271,57 @@ const PDFExport = ({ forecastData }) => {
         { id: 'geographic', option: 'includeGeographic', title: 'Geographic Threat Forecast' },
       ];
 
-      for (const chart of chartConfigs) {
-        if (exportOptions[chart.option]) {
-          checkPageBreak(100);
-          
-          pdf.setFontSize(14);
-          pdf.setTextColor(0, 0, 0);
-          if (chart.title && typeof chart.title === 'string') {
-            pdf.text(chart.title, margin, yPosition);
-          }
-          yPosition += 8;
+      const selectedCharts = chartConfigs.filter(chart => exportOptions[chart.option]);
+      
+      if (selectedCharts.length > 0) {
+        checkPageBreak(40);
+        pdf.setFontSize(16);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Charts & Analytics', margin, yPosition);
+        yPosition += 12;
+      }
 
-          const chartImage = await captureChart(chart.id);
-          if (chartImage) {
-            const imgWidth = contentWidth;
-            const imgHeight = (imgWidth * 280) / 600; // Maintain aspect ratio
-            
-            checkPageBreak(imgHeight + 10);
-            pdf.addImage(chartImage, 'PNG', margin, yPosition, imgWidth, imgHeight);
-            yPosition += imgHeight + 15;
+      // Process charts in pairs for 2-column layout
+      for (let i = 0; i < selectedCharts.length; i += 2) {
+        const leftChart = selectedCharts[i];
+        const rightChart = selectedCharts[i + 1];
+        
+        checkPageBreak(90);
+        
+        const chartWidth = (contentWidth - 10) / 2; // 10mm gap between charts
+        const chartHeight = 70; // Fixed height for consistency
+        
+        // Left chart
+        const leftImage = await captureChart(leftChart.id);
+        pdf.setFontSize(11);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(leftChart.title, margin, yPosition);
+        
+        if (leftImage) {
+          pdf.addImage(leftImage, 'PNG', margin, yPosition + 3, chartWidth, chartHeight);
+        } else {
+          pdf.setFontSize(9);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text('Chart not available', margin + 5, yPosition + 35);
+        }
+        
+        // Right chart (if exists)
+        if (rightChart) {
+          const rightImage = await captureChart(rightChart.id);
+          pdf.setFontSize(11);
+          pdf.setTextColor(0, 0, 0);
+          pdf.text(rightChart.title, margin + chartWidth + 10, yPosition);
+          
+          if (rightImage) {
+            pdf.addImage(rightImage, 'PNG', margin + chartWidth + 10, yPosition + 3, chartWidth, chartHeight);
           } else {
-            pdf.setFontSize(10);
+            pdf.setFontSize(9);
             pdf.setTextColor(150, 150, 150);
-            pdf.text('Chart not available', margin, yPosition);
-            yPosition += 15;
+            pdf.text('Chart not available', margin + chartWidth + 15, yPosition + 35);
           }
         }
+        
+        yPosition += chartHeight + 15;
       }
 
       // Footer on last page
