@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LossBySectorBarChart from './components/LossBySectorBarChart';
 import Navigation from './components/Navigation';
 import AboutUs from './components/AboutUs';
 import Contact from './components/Contact';
+import ThreatList from "./components/ThreatList"
+import SeverityDonutChart from "./components/SeverityDonutChart"
+import TopThreatTypesChart from "./components/TopThreatTypesChart"
 
 export default function App(){
   const [currentPage, setCurrentPage] = useState('dashboard');
+
+  const [threats, setThreats] = useState([]);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/threat/')
+      .then(res => res.json())
+      .then(data => setThreats(data))
+      .catch(err => console.error('Error fetching threats:', err));
+  }, []);
+
 
   const renderPage = () => {
     switch(currentPage) {
@@ -54,7 +67,7 @@ export default function App(){
         <section className="panel" style={{gridColumn: '1 / 2'}}>
           <h3>Key Metrics</h3>
           <div className="kpis">
-            <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">—</div></div>
+            <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">{threats.length}</div></div>
             <div className="kpi"><div className="label">Average Loss / Incident</div><div className="value">—</div></div>
             <div className="kpi"><div className="label">Exposure Score (0–100)</div><div className="value">—</div></div>
             <div className="kpi"><div className="label">KEV / Active Exploits</div><div className="value">—</div></div>
@@ -82,33 +95,35 @@ export default function App(){
                 </div>
               </div>
             </div>
-            
+
             <div className="chart-box" aria-label="Loss amount by sector bar chart">
               <LossBySectorBarChart />
             </div>
-            
+
             <div className="chart-box" aria-label="Incident severity distribution">
               <div className="chart-header">
                 <h3 className="chart-title">Incident Severity Distribution</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  🍩 Donut Chart Coming Soon
+                <div className="chart-container" style={{height: '450px', width: '100%'}}>
+                  <SeverityDonutChart threats={threats} />
                 </div>
               </div>
             </div>
-            
+
             <div className="chart-box" aria-label="Top threat types ranked">
               <div className="chart-header">
                 <h3 className="chart-title">Top Threat Types</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  📊 Bar Chart Coming Soon
+                <div className="chart-container" style={{height: '600px', width: '100%'}}>
+                  <div>
+                      <TopThreatTypesChart />
+                  </div>
                 </div>
               </div>
             </div>
-            
+
             <div className="chart-box" aria-label="Breach type distribution">
               <div className="chart-header">
                 <h3 className="chart-title">Breach Type Distribution</h3>
@@ -119,7 +134,7 @@ export default function App(){
                 </div>
               </div>
             </div>
-            
+
             <div className="chart-box" aria-label="Top vulnerable technologies">
               <div className="chart-header">
                 <h3 className="chart-title">Top Vulnerable Technologies</h3>

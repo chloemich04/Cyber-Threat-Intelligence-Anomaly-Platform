@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import ThreatIndicator
 from django.db import connection
+from django.db.models import Count
+from django.http import JsonResponse
 
 from .models import Threat, CweSoftwareDevelopment, NvdDataEnriched
 from .serializers import ThreatSerializer, CweSoftwareDevelopmentSerializer, NvdDataEnrichedSerializer
@@ -22,3 +24,12 @@ class CweSoftwareDevelopmentListCreateView(generics.ListCreateAPIView):
 class NvdDataEnrichedListCreateView(generics.ListCreateAPIView):
     queryset = NvdDataEnriched.objects.all()
     serializer_class = NvdDataEnrichedSerializer
+
+def top_threat_types(request):
+    data = (
+        Threat.objects
+        .values('threat_type')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    return JsonResponse(list(data), safe=False)
