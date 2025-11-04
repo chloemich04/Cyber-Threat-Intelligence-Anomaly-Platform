@@ -139,6 +139,12 @@ venv/
 django_backend/env/
 env.bak/
 venv.bak/
+.venv/
+venv/
+.venv*/
+env/
+ENV/
+.venv311/
 
 # Spyder project settings
 .spyderproject

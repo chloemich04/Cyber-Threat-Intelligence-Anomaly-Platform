@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',  # Add CORS support
     'rest_framework',
     #'rest_framework_gis', # Having issues with GDAL so I commented this line
     # (rest_framework_gis) out to make migrations and move on
@@ -71,10 +72,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# CORS settings for frontend
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React default
-    "http://127.0.0.1:5173"
+    "http://localhost:5173",# Vite dev server default port
+     "http://127.0.0.1:5173",
+    "http://localhost:3000",  # Alternative React dev port
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+
+
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -100,23 +107,23 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 
-# Database configuration - using SQLite for development
+# Database configuration - using PostgreSQL (production database with CVE/CWE data)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
-# PostgreSQL configuration (commented out for development)
+# SQLite configuration (commented out - empty local database)
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME'),
-#         'USER': os.getenv('DB_USER'),
-#         'PASSWORD': os.getenv('DB_PASSWORD'),
-#         'HOST': os.getenv('DB_HOST'),
-#         'PORT': os.getenv('DB_PORT'),
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
 

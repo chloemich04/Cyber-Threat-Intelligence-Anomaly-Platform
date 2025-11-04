@@ -953,5 +953,357 @@ main{
   }
 }
 
+/* Forecast Display Styles */
+.forecast-display {
+  width: 100%;
+}
+
+.forecast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.forecast-header h3 {
+  margin: 0 0 8px 0;
+  color: var(--text);
+}
+
+.forecast-timestamp {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.forecast-loading,
+.forecast-error {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--panel-2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.forecast-error {
+  background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%);
+}
+
+.forecast-error h3 {
+  color: var(--accent);
+  margin-bottom: 15px;
+}
+
+.forecast-instructions {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.forecast-instructions h4 {
+  margin-top: 0;
+  color: var(--text);
+}
+
+.forecast-instructions ol {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.forecast-instructions code {
+  background: var(--panel-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: var(--accent);
+}
+
+.forecast-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.forecast-country-section {
+  margin-bottom: 30px;
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+
+.forecast-country-section h4 {
+  margin: 0 0 15px 0;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.forecast-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.forecast-table th {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.forecast-table td {
+  vertical-align: middle;
+}
+
+.forecast-signals {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.forecast-signals .chip {
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: help;
+}
+
+.chip-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.chip-warning {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.chip-success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.forecast-explanation {
+  margin-top: 15px;
+  padding: 12px;
+  background: var(--panel);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.forecast-explanation strong {
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .forecast-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .forecast-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .forecast-table {
+    font-size: 11px;
+  }
+  
+  .forecast-country-section {
+    padding: 15px;
+  }
+}
+
 footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
+
+/* PDF Export Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.export-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.checkbox-label:hover {
+  background: rgba(56, 189, 248, 0.05);
+  border-color: var(--accent);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.checkbox-label span {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.checkbox-label input[type="checkbox"]:checked + span {
+  color: var(--accent);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.button.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.button.secondary:hover {
+  background: rgba(56, 189, 248, 0.05);
+  border-color: var(--accent);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95%;
+    max-height: 95vh;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
+  }
+  
+  .modal-header h2 {
+    font-size: 20px;
+  }
+  
+  .checkbox-label {
+    padding: 10px;
+  }
+  
+  .checkbox-label span {
+    font-size: 13px;
+  }
+}
 

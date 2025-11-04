@@ -28,8 +28,20 @@ const Navigation = () => {
             Dashboard
           </button>
           <button 
-            onClick={() => handleNavigation('predictions')} 
-            className={`nav-link ${currentPage === 'predictions' ? 'active' : ''}`}
+            onClick={() => handleNavigation('threat-intelligence')} 
+            className={`nav-link ${currentPage === 'threat-intelligence' ? 'active' : ''}`}
+          >
+            AI Threat Intelligence
+          </button>
+          <button 
+            onClick={() => handleNavigation('analytics')} 
+            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
+          >
+            Analytics
+          </button>
+          <button 
+            onClick={() => handleNavigation('reports')} 
+            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
           >
             Predictions
           </button>
@@ -67,8 +79,20 @@ const Navigation = () => {
             Dashboard
           </button>
           <button 
-            onClick={() => handleNavigation('predictions')} 
-            className={`nav-link ${currentPage === 'predictions' ? 'active' : ''}`}
+            onClick={() => handleNavigation('threat-intelligence')} 
+            className={`nav-link ${currentPage === 'threat-intelligence' ? 'active' : ''}`}
+          >
+            AI Threat Intelligence
+          </button>
+          <button 
+            onClick={() => handleNavigation('analytics')} 
+            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
+          >
+            Analytics
+          </button>
+          <button 
+            onClick={() => handleNavigation('reports')} 
+            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
           >
             Predictions
           </button>
