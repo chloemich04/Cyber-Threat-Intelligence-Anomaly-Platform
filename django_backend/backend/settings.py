@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     #'rest_framework_gis', # Having issues with GDAL so I commented this line
     # (rest_framework_gis) out to make migrations and move on
     'cyberintel',
-    'corsheaders',
 ]
 
 REST_FRAMEWORK = {

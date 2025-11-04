@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navigation from './components/Navigation';
 import AboutUs from './components/AboutUs';
 import Contact from './components/Contact';
 import ThreatIntelligence from './components/ThreatIntelligence';
 import DashboardPDFExport from './components/DashboardPDFExport';
-import React, { useState, useEffect } from 'react';
 import LossBySectorBarChart from './components/LossBySectorBarChart';
-import Navigation from './components/Navigation';
-import AboutUs from './components/AboutUs';
-import Contact from './components/Contact';
 import ThreatList from "./components/ThreatList"
 import SeverityDonutChart from "./components/SeverityDonutChart"
 import TopThreatTypesChart from "./components/TopThreatTypesChart"
