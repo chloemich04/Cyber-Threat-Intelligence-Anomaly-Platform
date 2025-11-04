@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     #'rest_framework_gis', # Having issues with GDAL so I commented this line
     # (rest_framework_gis) out to make migrations and move on
     'cyberintel',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -63,7 +64,7 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Add CORS middleware (must be before CommonMiddleware)
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -73,11 +74,14 @@ MIDDLEWARE = [
 
 # CORS settings for frontend
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite dev server default port
+    "http://localhost:5173",# Vite dev server default port
+     "http://127.0.0.1:5173",
     "http://localhost:3000",  # Alternative React dev port
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+
 
 ROOT_URLCONF = 'backend.urls'
 

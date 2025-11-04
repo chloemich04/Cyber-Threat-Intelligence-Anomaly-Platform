@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
 from .views import (
     ThreatListCreateView, 
     CweSoftwareDevelopmentListCreateView, 
@@ -16,4 +17,5 @@ urlpatterns = [
     path('forecast/', forecast_threats_api, name='forecast-api'),
     path('forecast/latest/', get_latest_forecast, name='forecast-latest'),
     path('forecast/charts/', forecast_chart_data, name='forecast-charts'),
+    path('threat/top-types/', views.top_threat_types, name='top-threat-types'), # show top threat types
 ]

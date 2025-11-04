@@ -10,6 +10,10 @@ import pandas as pd
 import json
 import os
 import random
+from .models import ThreatIndicator
+from django.db import connection
+from django.db.models import Count
+from django.http import JsonResponse
 
 from .models import ThreatIndicator, Threat, CweSoftwareDevelopment, NvdDataEnriched
 from .serializers import ThreatSerializer, CweSoftwareDevelopmentSerializer, NvdDataEnrichedSerializer
@@ -322,3 +326,11 @@ def get_latest_forecast(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+def top_threat_types(request):
+    data = (
+        Threat.objects
+        .values('threat_type')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    return JsonResponse(list(data), safe=False)

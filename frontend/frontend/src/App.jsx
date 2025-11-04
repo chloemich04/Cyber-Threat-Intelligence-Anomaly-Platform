@@ -4,9 +4,33 @@ import AboutUs from './components/AboutUs';
 import Contact from './components/Contact';
 import ThreatIntelligence from './components/ThreatIntelligence';
 import DashboardPDFExport from './components/DashboardPDFExport';
+import React, { useState, useEffect } from 'react';
+import LossBySectorBarChart from './components/LossBySectorBarChart';
+import Navigation from './components/Navigation';
+import AboutUs from './components/AboutUs';
+import Contact from './components/Contact';
+import ThreatList from "./components/ThreatList"
+import SeverityDonutChart from "./components/SeverityDonutChart"
+import TopThreatTypesChart from "./components/TopThreatTypesChart"
+import USHeatmap from './components/USHeatmap';
+import { useNavigation, useFilters, useMetrics, useThreatData, useInsights } from './context/AppContext';
 
 export default function App(){
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const { currentPage } = useNavigation();
+  const { filters, setFilter } = useFilters();
+  const { metrics } = useMetrics();
+  const { threatData } = useThreatData();
+  const { insights } = useInsights();
+
+  const [threats, setThreats] = useState([]);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/threat/')
+      .then(res => res.json())
+      .then(data => setThreats(data))
+      .catch(err => console.error('Error fetching threats:', err));
+  }, []);
+
 
   const renderPage = () => {
     switch(currentPage) {
@@ -27,11 +51,21 @@ export default function App(){
         </div>
 
         <div className="toolbar">
-          <select className="select" aria-label="Year filter" defaultValue="Year">
+          <select 
+            className="select" 
+            aria-label="Year filter" 
+            value={filters.year || 'Year'}
+            onChange={(e) => setFilter('year', e.target.value === 'Year' ? null : e.target.value)}
+          >
             <option>Year</option><option>2023</option><option>2024</option><option>2025</option>
           </select>
 
-          <select className="select" aria-label="Sector filter" defaultValue="Sector">
+          <select 
+            className="select" 
+            aria-label="Sector filter" 
+            value={filters.sector || 'Sector'}
+            onChange={(e) => setFilter('sector', e.target.value === 'Sector' ? null : e.target.value)}
+          >
             <option>Sector</option>
             <option>Finance & Insurance</option>
             <option>Healthcare</option>
@@ -43,7 +77,12 @@ export default function App(){
             <option>Transportation & Logistics</option>
           </select>
 
-          <select className="select" aria-label="Risk level" defaultValue="Risk Level">
+          <select 
+            className="select" 
+            aria-label="Risk level" 
+            value={filters.riskLevel || 'Risk Level'}
+            onChange={(e) => setFilter('riskLevel', e.target.value === 'Risk Level' ? null : e.target.value)}
+          >
             <option>Risk Level</option><option>High</option><option>Medium</option><option>Low</option>
           </select>
 
@@ -57,7 +96,7 @@ export default function App(){
         <section className="panel" style={{gridColumn: '1 / 2'}}>
           <h3>Key Metrics</h3>
           <div className="kpis">
-            <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">—</div></div>
+            <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">{threats.length}</div></div>
             <div className="kpi"><div className="label">Average Loss / Incident</div><div className="value">—</div></div>
             <div className="kpi"><div className="label">Exposure Score (0–100)</div><div className="value">—</div></div>
             <div className="kpi"><div className="label">KEV / Active Exploits</div><div className="value">—</div></div>
@@ -67,7 +106,9 @@ export default function App(){
         {/* Heatmap */}
         <section className="panel" style={{gridColumn: '1 / 2'}}>
           <h3>Threat Activity Heatmap</h3>
-          <div className="heatmap" aria-label="Geographic heatmap placeholder">MAP / HEATMAP</div>
+          <div className="heatmap" aria-label="Geographic heatmap">
+            <USHeatmap />
+          </div>
           <div className="legend"><span>Low</span><span className="bar" aria-hidden="true"></span><span>High</span></div>
         </section>
 
@@ -88,41 +129,36 @@ export default function App(){
                 </div>
               </div>
             </div>
-            
-            <div className="chart-box" aria-label="Top threat types ranked" data-dashboard-chart-id="top-threats">
-              <div className="chart-header">
-                <h3 className="chart-title">Top Threat Types</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  📊 Bar Chart Coming Soon
-                </div>
-              </div>
+
+            <div className="chart-box" aria-label="Loss amount by sector bar chart">
+              <LossBySectorBarChart />
             </div>
-            
-            <div className="chart-box" aria-label="Breach type distribution" data-dashboard-chart-id="breach-types">
+
+            <div className="chart-box" aria-label="Incident severity distribution">
               <div className="chart-header">
                 <h3 className="chart-title">Breach Type Distribution</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  🥧 Pie Chart Coming Soon
+                <div className="chart-container" style={{height: '450px', width: '100%'}}>
+                  <SeverityDonutChart threats={threats} />
                 </div>
               </div>
             </div>
-            
-            <div className="chart-box" aria-label="Top vulnerable technologies" data-dashboard-chart-id="vulnerable-tech">
+
+            <div className="chart-box" aria-label="Top threat types ranked">
               <div className="chart-header">
                 <h3 className="chart-title">Top Vulnerable Technologies</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  📊 Bar Chart Coming Soon
+                <div className="chart-container" style={{height: '600px', width: '100%'}}>
+                  <div>
+                      <TopThreatTypesChart />
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="chart-box" aria-label="Attack vector trends" data-dashboard-chart-id="attack-vectors">
+
+            <div className="chart-box" aria-label="Breach type distribution">
               <div className="chart-header">
                 <h3 className="chart-title">Attack Vector Trends</h3>
               </div>
@@ -132,8 +168,8 @@ export default function App(){
                 </div>
               </div>
             </div>
-            
-            <div className="chart-box" aria-label="Response time metrics" data-dashboard-chart-id="response-times">
+
+            <div className="chart-box" aria-label="Top vulnerable technologies">
               <div className="chart-header">
                 <h3 className="chart-title">Incident Response Times</h3>
               </div>
@@ -160,41 +196,15 @@ export default function App(){
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Phishing</td>
-                <td>1,245</td>
-                <td>+12%</td>
-                <td>$8,400</td>
-                <td>Rising</td>
-              </tr>
-              <tr>
-                <td>Ransomware</td>
-                <td>530</td>
-                <td>+4%</td>
-                <td>$58,000</td>
-                <td>Stable</td>
-              </tr>
-              <tr>
-                <td>Malware</td>
-                <td>890</td>
-                <td>-6%</td>
-                <td>$11,200</td>
-                <td>Falling</td>
-              </tr>
-              <tr>
-                <td>DDoS</td>
-                <td>210</td>
-                <td>+1%</td>
-                <td>$5,600</td>
-                <td>Stable</td>
-              </tr>
-              <tr>
-                <td>Credential Stuffing</td>
-                <td>430</td>
-                <td>+9%</td>
-                <td>$3,700</td>
-                <td>Rising</td>
-              </tr>
+              {threatData.threatSummary.map((threat, index) => (
+                <tr key={index}>
+                  <td>{threat.category}</td>
+                  <td>{threat.incidents.toLocaleString()}</td>
+                  <td>{threat.change > 0 ? '+' : ''}{threat.change}%</td>
+                  <td>${threat.avgLoss.toLocaleString()}</td>
+                  <td>{threat.status}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </section>
@@ -203,10 +213,10 @@ export default function App(){
         <aside className="panel" style={{gridColumn: '2 / 3', gridRow: '1', alignSelf: 'start'}}>
           <h3>Insights</h3>
           <div className="list">
-            <p><strong>Highest Rate:</strong> <span className="chip">State A</span></p>
-            <p><strong>Lowest Rate:</strong> <span className="chip">State B</span></p>
-            <p><strong>Top Threat Types:</strong> Ransomware, Phishing, DDoS</p>
-            <p><strong>Notes:</strong> Use this panel for anomaly alerts (e.g., KEV matches, spikes).</p>
+            <p><strong>Highest Rate:</strong> <span className="chip">{insights.highestRate}</span></p>
+            <p><strong>Lowest Rate:</strong> <span className="chip">{insights.lowestRate}</span></p>
+            <p><strong>Top Threat Types:</strong> {insights.topThreatTypes.join(', ')}</p>
+            <p><strong>Notes:</strong> {insights.notes}</p>
           </div>
         </aside>
       </main>
@@ -219,7 +229,7 @@ export default function App(){
 
   return (
     <>
-      <Navigation onNavigate={setCurrentPage} currentPage={currentPage} />
+      <Navigation />
       {renderPage()}
     </>
   );
