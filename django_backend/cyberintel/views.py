@@ -15,8 +15,8 @@ from django.db import connection
 from django.db.models import Count
 from django.http import JsonResponse
 
-from .models import ThreatIndicator, Threat, CweSoftwareDevelopment, NvdDataEnriched
-from .serializers import ThreatSerializer, CweSoftwareDevelopmentSerializer, NvdDataEnrichedSerializer
+from .models import ThreatIndicator, Threat, CweSoftwareDevelopment, NvdDataEnriched, FakeData
+from .serializers import ThreatSerializer, CweSoftwareDevelopmentSerializer, NvdDataEnrichedSerializer, FakeDataSerializer
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -35,6 +35,14 @@ class CweSoftwareDevelopmentListCreateView(generics.ListCreateAPIView):
 class NvdDataEnrichedListCreateView(generics.ListCreateAPIView):
     queryset = NvdDataEnriched.objects.all()
     serializer_class = NvdDataEnrichedSerializer
+
+class FakeDataListView(generics.ListAPIView):
+    queryset = FakeData.objects.all()
+    serializer_class = FakeDataSerializer
+
+def heatmap_data(request):
+    data = list(FakeData.objects.values('latitude', 'longitude','region_code','epss'))
+    return JsonResponse(data, safe=False)
 
 
 @api_view(['POST'])

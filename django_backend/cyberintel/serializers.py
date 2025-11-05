@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Threat, CweSoftwareDevelopment, NvdDataEnriched
+from .models import Threat, CweSoftwareDevelopment, NvdDataEnriched, FakeData
 
 
 class ThreatSerializer(serializers.ModelSerializer):
@@ -15,4 +15,9 @@ class CweSoftwareDevelopmentSerializer(serializers.ModelSerializer):
 class NvdDataEnrichedSerializer(serializers.ModelSerializer):
     class Meta:
         model = NvdDataEnriched
+        fields = '__all__'
+
+class FakeDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FakeData
         fields = '__all__'
