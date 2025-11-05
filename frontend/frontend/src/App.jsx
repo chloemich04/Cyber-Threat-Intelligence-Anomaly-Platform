@@ -102,10 +102,21 @@ export default function App(){
         {/* Heatmap */}
         <section className="panel" style={{gridColumn: '1 / 2'}}>
           <h3>Threat Activity Heatmap</h3>
-          <div className="heatmap" aria-label="Geographic heatmap">
-            <USHeatmap />
+          <div className="heatmap" style={{ width: '100%', height: '500px' }} aria-label="Geographic heatmap">
+              <USHeatmap />
           </div>
-          <div className="legend"><span>Low</span><span className="bar" aria-hidden="true"></span><span>High</span></div>
+            <div className="legend"><span>Low</span>
+                <div className="bar" aria-hidden="true"></div><span>High</span>
+            </div>
+
+          <div className="legend-container" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
+            {/* No Data Box */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '16px', height: '16px', backgroundColor: '#555', borderRadius: '4px', border: '1px solid #fff' }}></div>
+              <span>No Data</span>
+            </div>
+          </div>
+
         </section>
 
         {/* Charts Section - Historical Data (Not AI Predictions) */}

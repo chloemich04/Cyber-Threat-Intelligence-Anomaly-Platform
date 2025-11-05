@@ -248,8 +248,32 @@ main{
   position:relative;
   overflow:hidden;
 }
-.legend{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin-top:10px}
-.legend .bar{height:8px;width:160px;background:linear-gradient(90deg,#9cabbb,#0ea5e9);border-radius:999px}
+
+/* App.css or wherever your styles are */
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-top: 8px;
+  color: white;
+}
+
+.legend span {
+  z-index: 1;
+}
+
+.legend .bar {
+  flex: 1;
+  height: 16px;
+  margin: 0 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #00ff32, #ff0000); /* green to red */
+  border: 1px solid #fff;
+  position: relative;
+}
+
+
 
 /* Charts grid - 3x2 Layout */
 .charts {

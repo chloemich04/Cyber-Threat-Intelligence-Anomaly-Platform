@@ -38,6 +38,20 @@ class Threat(models.Model):
     def __str__(self):
         return f"{self.threat_type} from {self.source}"
 
+# Created model made for .csv file of data for heatmap
+class FakeData(models.Model):
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    country_name = models.CharField(max_length=100)
+    country_code = models.CharField(max_length=10)
+    region_code = models.CharField(max_length=10)
+    city = models.CharField(max_length=100)
+    cve_id = models.CharField(max_length=50)
+    epss = models.FloatField()
+    cvss_version = models.FloatField()
+
+    def __str__(self):
+        return f"{self.city}, {self.country_name} ({self.cve_id})"
 
 class CweSoftwareDevelopment(models.Model):
     cwe_id = models.TextField(blank=True, null=False,primary_key=True)
