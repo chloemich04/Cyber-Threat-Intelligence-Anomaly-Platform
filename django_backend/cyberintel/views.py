@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from django.utils import timezone
+from django.utils import timezone, cache
 from django.http import JsonResponse
 from django.conf import settings
 from datetime import timedelta, datetime
@@ -10,39 +10,40 @@ import pandas as pd
 import json
 import os
 import random
-from .models import ThreatIndicator
 from django.db import connection
-from django.db.models import Count
-from django.http import JsonResponse
+from django.db.models import Count, Sum
+from django.core.cache import cache
 
-from .models import ThreatIndicator, Threat, CweSoftwareDevelopment, NvdDataEnriched, FakeData
-from .serializers import ThreatSerializer, CweSoftwareDevelopmentSerializer, NvdDataEnrichedSerializer, FakeDataSerializer
+from .models import ThreatIndicator, CveCountsByRegion
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
 
 
 # Create your views here.
-
-class ThreatListCreateView(generics.ListCreateAPIView):
-    queryset = Threat.objects.all()
-    serializer_class = ThreatSerializer
-
-class CweSoftwareDevelopmentListCreateView(generics.ListCreateAPIView):
-    queryset = CweSoftwareDevelopment.objects.all()
-    serializer_class = CweSoftwareDevelopmentSerializer
-
-class NvdDataEnrichedListCreateView(generics.ListCreateAPIView):
-    queryset = NvdDataEnriched.objects.all()
-    serializer_class = NvdDataEnrichedSerializer
-
-class FakeDataListView(generics.ListAPIView):
-    queryset = FakeData.objects.all()
-    serializer_class = FakeDataSerializer
-
 def heatmap_data(request):
-    data = list(FakeData.objects.values('latitude', 'longitude','region_code','epss'))
-    return JsonResponse(data, safe=False)
+    cached_data = cache.get('heatmap_data')
+    if cached_data:
+        return JsonResponse(cached_data, safe=False)
+    """
+    Returns aggregated CVE counts per state.
+    """
+
+    # Aggregate CVE counts by state
+    data = (
+        CveCountsByRegion.objects
+        .values('region_code')
+        .annotate(total_cves=Sum('cve_count'))
+        .order_by('region_code')
+    )
+
+    results = [
+        {'region_code': item['region_code'], 'total_cves': item['total_cves']}
+        for item in data
+    ]
+
+    return JsonResponse(results, safe=False)
+
 
 
 @api_view(['POST'])
@@ -334,11 +335,4 @@ def get_latest_forecast(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-def top_threat_types(request):
-    data = (
-        Threat.objects
-        .values('threat_type')
-        .annotate(count=Count('id'))
-        .order_by('-count')
-    )
-    return JsonResponse(list(data), safe=False)
+
