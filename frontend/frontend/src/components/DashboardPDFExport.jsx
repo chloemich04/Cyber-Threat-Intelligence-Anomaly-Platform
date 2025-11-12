@@ -51,47 +51,85 @@ const DashboardPDFExport = () => {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
+      const margin = 20;
       const contentWidth = pageWidth - (2 * margin);
       let yPosition = margin;
+      
+      // Color palette from app (converted to RGB)
+      const colors = {
+        bg: [15, 23, 42],           // --bg: #0f172a
+        panel: [17, 24, 39],        // --panel: #111827
+        text: [229, 231, 235],      // --text: #e5e7eb
+        muted: [148, 163, 184],     // --muted: #94a3b8
+        accent: [56, 189, 248],     // --accent: #38bdf8
+        accent2: [34, 197, 94],     // --accent-2: #22c55e
+        warn: [245, 158, 11],       // --warn: #f59e0b
+        danger: [239, 68, 68],      // --danger: #ef4444
+        border: [31, 41, 55],       // --border: #1f2937
+      };
+
+      // Set dark background
+      pdf.setFillColor(...colors.bg);
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
       // Helper function to add new page if needed
       const checkPageBreak = (requiredSpace) => {
         if (yPosition + requiredSpace > pageHeight - margin) {
           pdf.addPage();
+          // Add dark background to new page
+          pdf.setFillColor(...colors.bg);
+          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
           yPosition = margin;
           return true;
         }
         return false;
       };
 
-      // Header
-      pdf.setFontSize(20);
-      pdf.setTextColor(37, 99, 235);
-      pdf.text('Cyber Threat Intelligence Dashboard Report', margin, yPosition);
-      yPosition += 10;
+      // Header with gradient effect
+      pdf.setFillColor(56, 189, 248); // Accent color
+      pdf.rect(0, 0, pageWidth, 15, 'F');
+      
+      pdf.setFontSize(24);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Cyber Threat Intelligence Dashboard Report', margin, yPosition + 5);
+      yPosition += 20;
 
       pdf.setFontSize(10);
-      pdf.setTextColor(100, 100, 100);
+      pdf.setTextColor(...colors.muted);
+      pdf.setFont('helvetica', 'normal');
       pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, yPosition);
+      
+      // Add decorative line
+      pdf.setDrawColor(...colors.accent);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, yPosition + 3, pageWidth - margin, yPosition + 3);
       yPosition += 15;
 
       // Executive Summary
-      pdf.setFontSize(14);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('Executive Summary', margin, yPosition);
-      yPosition += 8;
+      checkPageBreak(35);
+      
+      // Section header with background
+      pdf.setFillColor(...colors.panel);
+      pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+      
+      pdf.setFontSize(16);
+      pdf.setTextColor(...colors.accent);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Executive Summary', margin + 3, yPosition + 5);
+      yPosition += 14;
 
-      pdf.setFontSize(10);
-      pdf.setTextColor(60, 60, 60);
+      pdf.setFontSize(11);
+      pdf.setTextColor(...colors.text);
+      pdf.setFont('helvetica', 'normal');
       const summary = 'This report provides comprehensive insights into current cyber threat landscape, including historical threat data, incident metrics, and key vulnerability trends.';
-      const lines = pdf.splitTextToSize(summary, contentWidth);
+      const lines = pdf.splitTextToSize(summary, contentWidth - 6);
       if (Array.isArray(lines)) {
         lines.forEach(line => {
           if (line && typeof line === 'string') {
-            checkPageBreak(6);
-            pdf.text(line, margin, yPosition);
-            yPosition += 6;
+            checkPageBreak(7);
+            pdf.text(line, margin + 3, yPosition);
+            yPosition += 7;
           }
         });
       }
@@ -101,80 +139,104 @@ const DashboardPDFExport = () => {
       if (exportOptions.includeMetrics) {
         checkPageBreak(50);
         
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Key Metrics', margin, yPosition);
-        yPosition += 10;
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
+        pdf.setFontSize(16);
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Key Metrics', margin + 3, yPosition + 5);
+        yPosition += 16;
 
+        // Metrics in cards
         const metrics = [
-          ['Total Cyber Incidents:', '—'],
-          ['Average Loss / Incident:', '—'],
-          ['Exposure Score (0-100):', '—'],
-          ['KEV / Active Exploits:', '—'],
+          { label: 'Total Cyber Incidents', value: '—' },
+          { label: 'Average Loss / Incident', value: '—' },
+          { label: 'Exposure Score (0-100)', value: '—' },
+          { label: 'KEV / Active Exploits', value: '—' },
         ];
 
-        pdf.setFontSize(10);
-        metrics.forEach(([label, value]) => {
-          checkPageBreak(7);
-          pdf.setFont(undefined, 'bold');
-          if (label && typeof label === 'string') {
-            pdf.text(label, margin, yPosition);
+        metrics.forEach((metric, idx) => {
+          if (idx % 2 === 0 && idx > 0) {
+            yPosition += 22;
+            checkPageBreak(22);
           }
-          pdf.setFont(undefined, 'normal');
-          if (value && typeof value === 'string') {
-            pdf.text(value, margin + 70, yPosition);
+          
+          const xStart = margin + (idx % 2) * (contentWidth / 2 + 5);
+          const cardWidth = (contentWidth / 2) - 5;
+          
+          // Metric card with gradient background
+          pdf.setFillColor(17, 24, 39);
+          pdf.roundedRect(xStart, yPosition, cardWidth, 18, 2, 2, 'F');
+          
+          // Card border
+          pdf.setDrawColor(...colors.border);
+          pdf.setLineWidth(0.3);
+          pdf.roundedRect(xStart, yPosition, cardWidth, 18, 2, 2, 'D');
+          
+          // Label
+          pdf.setFontSize(10);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'normal');
+          if (metric.label && typeof metric.label === 'string') {
+            pdf.text(metric.label, xStart + 3, yPosition + 6);
           }
-          yPosition += 7;
+          
+          // Value
+          pdf.setFontSize(14);
+          pdf.setTextColor(...colors.accent);
+          pdf.setFont('helvetica', 'bold');
+          if (metric.value && typeof metric.value === 'string') {
+            pdf.text(metric.value, xStart + 3, yPosition + 14);
+          }
         });
-        yPosition += 10;
+        
+        yPosition += 24;
       }
 
       // Threat Summary Table
       if (exportOptions.includeThreatSummary) {
         checkPageBreak(80);
         
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Threat Summary', margin, yPosition);
-        yPosition += 10;
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
+        pdf.setFontSize(16);
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Threat Summary', margin + 3, yPosition + 5);
+        yPosition += 16;
 
-        // Table with borders
-        const colWidths = [45, 30, 30, 30, 30];
+        // Table with modern styling
+        const colWidths = [38, 22, 22, 22, 22];
         const headers = ['Category', 'Incidents', '% Change', 'Avg Loss', 'Status'];
-        const tableWidth = colWidths.reduce((sum, w) => sum + w, 0);
+        let xPos = margin;
         
         // Draw table header background
-        pdf.setFillColor(240, 240, 240);
-        pdf.rect(margin, yPosition - 4, tableWidth, 6, 'F');
+        pdf.setFillColor(31, 41, 55);
+        pdf.roundedRect(margin, yPosition - 4, contentWidth, 8, 1, 1, 'F');
         
         // Draw header borders
-        pdf.setDrawColor(150, 150, 150);
-        pdf.setLineWidth(0.3);
-        
-        let xPos = margin;
+        pdf.setDrawColor(...colors.border);
+        pdf.setLineWidth(0.2);
         
         // Header text
         pdf.setFontSize(9);
-        pdf.setFont(undefined, 'bold');
+        pdf.setTextColor(...colors.text);
+        pdf.setFont('helvetica', 'bold');
         
         headers.forEach((header, i) => {
-          // Vertical lines
-          pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
           if (header && typeof header === 'string') {
-            pdf.text(header, xPos + 2, yPosition);
+            pdf.text(header, xPos + 2, yPosition + 1);
           }
           xPos += colWidths[i];
         });
-        // Last vertical line
-        pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
         
-        // Horizontal lines for header
-        pdf.line(margin, yPosition - 4, margin + tableWidth, yPosition - 4);
-        pdf.line(margin, yPosition + 2, margin + tableWidth, yPosition + 2);
-        
-        yPosition += 7;
+        yPosition += 8;
 
-        // Table data with borders
+        // Table data with modern styling
         const threatData = [
           ['Phishing', '1,245', '+12%', '$8,400', 'Rising'],
           ['Ransomware', '530', '+4%', '$58,000', 'Stable'],
@@ -183,35 +245,50 @@ const DashboardPDFExport = () => {
           ['Credential Stuffing', '430', '+9%', '$3,700', 'Rising'],
         ];
 
-        pdf.setFont(undefined, 'normal');
-        threatData.forEach(row => {
-          checkPageBreak(7);
+        pdf.setFont('helvetica', 'normal');
+        threatData.forEach((row, idx) => {
+          checkPageBreak(9);
+          
+          // Alternating row backgrounds
+          if (idx % 2 === 0) {
+            pdf.setFillColor(17, 24, 39);
+            pdf.rect(margin, yPosition - 4, contentWidth, 7, 'F');
+          }
+          
           xPos = margin;
           row.forEach((cell, i) => {
-            // Vertical line
-            pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
+            pdf.setFontSize(9);
+            pdf.setTextColor(...colors.text);
+            
             if (cell && typeof cell === 'string') {
-              pdf.text(cell, xPos + 2, yPosition);
+              pdf.text(cell, xPos + 2, yPosition + 1);
             }
             xPos += colWidths[i];
           });
-          // Last vertical line
-          pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
-          // Horizontal line
-          pdf.line(margin, yPosition + 2, margin + tableWidth, yPosition + 2);
-          yPosition += 6;
+          
+          // Subtle row separator
+          pdf.setDrawColor(...colors.border);
+          pdf.setLineWidth(0.1);
+          pdf.line(margin, yPosition + 3, margin + contentWidth, yPosition + 3);
+          
+          yPosition += 7;
         });
         yPosition += 10;
       }
 
       // Insights
       if (exportOptions.includeInsights) {
-        checkPageBreak(40);
+        checkPageBreak(45);
         
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Key Insights', margin, yPosition);
-        yPosition += 10;
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
+        pdf.setFontSize(16);
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Key Insights', margin + 3, yPosition + 5);
+        yPosition += 16;
 
         const insights = [
           'Highest Rate: State A',
@@ -219,8 +296,9 @@ const DashboardPDFExport = () => {
           'Top Threat Types: Ransomware, Phishing, DDoS',
         ];
 
-        pdf.setFontSize(10);
-        pdf.setTextColor(60, 60, 60);
+        pdf.setFontSize(11);
+        pdf.setTextColor(...colors.text);
+        pdf.setFont('helvetica', 'normal');
         insights.forEach(insight => {
           checkPageBreak(7);
           if (insight && typeof insight === 'string') {
@@ -244,11 +322,17 @@ const DashboardPDFExport = () => {
       const selectedCharts = chartConfigs.filter(chart => exportOptions[chart.option]);
       
       if (selectedCharts.length > 0) {
-        checkPageBreak(40);
+        checkPageBreak(45);
+        
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
         pdf.setFontSize(16);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Historical Analytics Charts', margin, yPosition);
-        yPosition += 12;
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Historical Analytics Charts', margin + 3, yPosition + 5);
+        yPosition += 18;
       }
 
       // Process charts in pairs for 2-column layout
@@ -256,48 +340,81 @@ const DashboardPDFExport = () => {
         const leftChart = selectedCharts[i];
         const rightChart = selectedCharts[i + 1];
         
-        checkPageBreak(90);
+        checkPageBreak(95);
         
         const chartWidth = (contentWidth - 10) / 2; // 10mm gap between charts
-        const chartHeight = 70; // Fixed height for consistency
+        const chartHeight = 75; // Fixed height for consistency
         
         // Left chart
         const leftImage = await captureChart(leftChart.id);
+        
+        // Chart title with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition, chartWidth, 8, 1, 1, 'F');
         pdf.setFontSize(11);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(leftChart.title, margin, yPosition);
+        pdf.setTextColor(...colors.text);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(leftChart.title, margin + 2, yPosition + 5);
         
         if (leftImage) {
-          pdf.addImage(leftImage, 'PNG', margin, yPosition + 3, chartWidth, chartHeight);
+          pdf.addImage(leftImage, 'PNG', margin, yPosition + 9, chartWidth, chartHeight);
         } else {
+          pdf.setFillColor(...colors.panel);
+          pdf.roundedRect(margin, yPosition + 9, chartWidth, chartHeight, 2, 2, 'F');
+          pdf.setDrawColor(...colors.border);
+          pdf.setLineWidth(0.5);
+          pdf.setLineDash([2, 2]);
+          pdf.roundedRect(margin, yPosition + 9, chartWidth, chartHeight, 2, 2, 'D');
+          pdf.setLineDash([]);
+          
           pdf.setFontSize(9);
-          pdf.setTextColor(150, 150, 150);
-          pdf.text('Chart not available or coming soon', margin + 5, yPosition + 35);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'italic');
+          pdf.text('Chart not available or coming soon', margin + (chartWidth / 2), yPosition + (chartHeight / 2), { align: 'center' });
         }
         
         // Right chart (if exists)
         if (rightChart) {
           const rightImage = await captureChart(rightChart.id);
+          const rightX = margin + chartWidth + 10;
+          
+          // Chart title with background
+          pdf.setFillColor(...colors.panel);
+          pdf.roundedRect(rightX, yPosition, chartWidth, 8, 1, 1, 'F');
           pdf.setFontSize(11);
-          pdf.setTextColor(0, 0, 0);
-          pdf.text(rightChart.title, margin + chartWidth + 10, yPosition);
+          pdf.setTextColor(...colors.text);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(rightChart.title, rightX + 2, yPosition + 5);
           
           if (rightImage) {
-            pdf.addImage(rightImage, 'PNG', margin + chartWidth + 10, yPosition + 3, chartWidth, chartHeight);
+            pdf.addImage(rightImage, 'PNG', rightX, yPosition + 9, chartWidth, chartHeight);
           } else {
+            pdf.setFillColor(...colors.panel);
+            pdf.roundedRect(rightX, yPosition + 9, chartWidth, chartHeight, 2, 2, 'F');
+            pdf.setDrawColor(...colors.border);
+            pdf.setLineWidth(0.5);
+            pdf.setLineDash([2, 2]);
+            pdf.roundedRect(rightX, yPosition + 9, chartWidth, chartHeight, 2, 2, 'D');
+            pdf.setLineDash([]);
+            
             pdf.setFontSize(9);
-            pdf.setTextColor(150, 150, 150);
-            pdf.text('Chart not available or coming soon', margin + chartWidth + 15, yPosition + 35);
+            pdf.setTextColor(...colors.muted);
+            pdf.setFont('helvetica', 'italic');
+            pdf.text('Chart not available or coming soon', rightX + (chartWidth / 2), yPosition + (chartHeight / 2), { align: 'center' });
           }
         }
         
-        yPosition += chartHeight + 15;
+        yPosition += chartHeight + 20;
       }
 
       // Footer on last page
+      pdf.setFillColor(56, 189, 248); // Accent color bar
+      pdf.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+      
       pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('© 2025 CTI Dashboard — Historical Threat Analytics', margin, pageHeight - 10);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('© 2025 CTI Dashboard — Historical Threat Analytics', pageWidth / 2, pageHeight - 5, { align: 'center' });
 
       // Save the PDF
       const filename = `dashboard-report-${new Date().toISOString().split('T')[0]}.pdf`;

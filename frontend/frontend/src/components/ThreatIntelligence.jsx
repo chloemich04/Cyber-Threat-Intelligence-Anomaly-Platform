@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ForecastDisplay from './ForecastDisplay';
 import LossBySectorBarChart from './LossBySectorBarChart';
+import TopThreatTypesChart from './TopThreatTypesChart';
 import PDFExport from './PDFExport';
 
 // ==========================================
@@ -8,7 +9,7 @@ import PDFExport from './PDFExport';
 // ==========================================
 // Set to true to enable automatic weekly forecasts every Monday at 9 AM
 // Set to false to disable automatic forecasts (manual only)
-const AUTO_FORECAST_ENABLED = true;
+const AUTO_FORECAST_ENABLED = false;
 // ==========================================
 
 export default function ThreatIntelligence() {
@@ -149,7 +150,7 @@ export default function ThreatIntelligence() {
           
           <div className="select" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'default'}}>
             <span style={{fontSize: '0.85rem', color: 'var(--muted)'}}>Analysis Scope:</span>
-            <span style={{fontWeight: '600'}}>Worldwide</span>
+            <span style={{fontWeight: '600'}}>United States</span>
           </div>
           
           <div className="select" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'default'}}>
@@ -188,6 +189,49 @@ export default function ThreatIntelligence() {
       </header>
 
       <main>
+
+        {/* Forecast Accuracy Metrics */}
+        <section className="panel" style={{gridColumn: '1 / -1'}}>
+          <h3>Forecast Accuracy & Performance</h3>
+          <div className="kpis">
+            <div className="kpi">
+              <div className="label">Average Confidence</div>
+              <div className="value">
+                {forecastData?.predictions && forecastData.predictions.length > 0
+                  ? `${Math.round(
+                      (forecastData.predictions.reduce((sum, p) => sum + (p.confidence || 0), 0) / 
+                       forecastData.predictions.length) * 100
+                    )}%`
+                  : '—'}
+              </div>
+            </div>
+            <div className="kpi">
+              <div className="label">Average Spike Probability</div>
+              <div className="value">
+                {forecastData?.predictions && forecastData.predictions.length > 0
+                  ? `${Math.round(
+                      (forecastData.predictions.reduce((sum, p) => sum + (p.spike_probability || 0), 0) / 
+                       forecastData.predictions.length) * 100
+                    )}%`
+                  : '—'}
+              </div>
+            </div>
+            <div className="kpi">
+              <div className="label">CVEs Analyzed</div>
+              <div className="value">
+                {forecastData?.total_threats || '100'}
+              </div>
+            </div>
+            <div className="kpi">
+              <div className="label">Threat Types Identified</div>
+              <div className="value">
+                {forecastData?.threat_types?.length || '—'}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
         {/* AI Forecast Section - Full Width */}
         <section className="panel" style={{gridColumn: '1 / -1'}}>
           <ForecastDisplay />
@@ -201,15 +245,8 @@ export default function ThreatIntelligence() {
               <LossBySectorBarChart />
             </div>
             
-            <div className="chart-box" aria-label="Predicted threat severity" data-chart-id="threat-severity">
-              <div className="chart-header">
-                <h3 className="chart-title">Predicted Threat Severity (Next 4 Weeks)</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  AI Severity Distribution Coming Soon
-                </div>
-              </div>
+            <div className="chart-box" aria-label="Top threat types for next 4 weeks" data-chart-id="threat-severity">
+              <TopThreatTypesChart />
             </div>
             
             <div className="chart-box" aria-label="Top predicted CVEs" data-chart-id="top-cves">
@@ -247,53 +284,6 @@ export default function ThreatIntelligence() {
           </div>
         </section>
 
-    
-
-        {/* Forecast Accuracy Metrics */}
-        <section className="panel" style={{gridColumn: '1 / -1'}}>
-          <h3>Forecast Accuracy & Performance</h3>
-          <div className="kpis">
-            <div className="kpi">
-              <div className="label">Average Confidence</div>
-              <div className="value">—</div>
-            </div>
-            <div className="kpi">
-              <div className="label">Prediction Accuracy</div>
-              <div className="value">—</div>
-            </div>
-            <div className="kpi">
-              <div className="label">CVEs Analyzed</div>
-              <div className="value">100</div>
-            </div>
-            <div className="kpi">
-              <div className="label">Threat Events</div>
-              <div className="value">~450</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Recent Predictions Table */}
-        <section className="panel" style={{gridColumn: '1 / -1'}}>
-          <h3>Recent Forecast Predictions</h3>
-          <table className="table" aria-label="Recent predictions">
-            <thead>
-              <tr>
-                <th>Week</th>
-                <th>Expected Threats</th>
-                <th>Spike Probability</th>
-                <th>Top Country</th>
-                <th>Confidence</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colSpan="5" style={{textAlign: 'center', color: 'var(--muted)'}}>
-                  Run forecast to see predictions
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
       </main>
 
       <footer>© 2025 CTI Dashboard — AI-Powered Threat Intelligence</footer>

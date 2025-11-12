@@ -126,11 +126,11 @@ export default function App(){
               </div>
             </div>
 
-            <div className="chart-box" aria-label="Loss amount by sector bar chart">
+            <div className="chart-box" aria-label="Loss amount by sector bar chart" data-dashboard-chart-id="top-threats">
               <LossBySectorBarChart />
             </div>
 
-            <div className="chart-box" aria-label="Incident severity distribution">
+            <div className="chart-box" aria-label="Breach type distribution" data-dashboard-chart-id="breach-types">
               <div className="chart-header">
                 <h3 className="chart-title">Breach Type Distribution</h3>
               </div>
@@ -141,7 +141,7 @@ export default function App(){
               </div>
             </div>
 
-            <div className="chart-box" aria-label="Top threat types ranked">
+            <div className="chart-box" aria-label="Top threat types ranked" data-dashboard-chart-id="vulnerable-tech">
               <div className="chart-header">
                 <h3 className="chart-title">Top Vulnerable Technologies</h3>
               </div>
@@ -154,7 +154,7 @@ export default function App(){
               </div>
             </div>
 
-            <div className="chart-box" aria-label="Breach type distribution">
+            <div className="chart-box" aria-label="Attack vector trends" data-dashboard-chart-id="attack-vectors">
               <div className="chart-header">
                 <h3 className="chart-title">Attack Vector Trends</h3>
               </div>
@@ -165,7 +165,7 @@ export default function App(){
               </div>
             </div>
 
-            <div className="chart-box" aria-label="Top vulnerable technologies">
+            <div className="chart-box" aria-label="Top vulnerable technologies" data-dashboard-chart-id="response-times">
               <div className="chart-header">
                 <h3 className="chart-title">Incident Response Times</h3>
               </div>

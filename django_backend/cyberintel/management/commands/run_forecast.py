@@ -17,6 +17,45 @@ import random
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
 
 
+def classify_threat_type(cwe_name, weakness, description, cve_description):
+    """
+    Classify threat type based on CWE and CVE data.
+    Uses keyword matching to determine threat category.
+    """
+    # Define threat type keywords for classification
+    threat_keywords = {
+        'Injection': ['injection', 'sql', 'command', 'code injection', 'ldap', 'xpath', 'expression language'],
+        'Cross-Site Scripting (XSS)': ['xss', 'cross-site scripting', 'script injection'],
+        'Buffer Overflow': ['buffer overflow', 'buffer', 'overflow', 'memory corruption', 'stack overflow', 'heap overflow'],
+        'Authentication': ['authentication', 'credential', 'password', 'login', 'session', 'authorization'],
+        'Cryptographic': ['cryptographic', 'encryption', 'crypto', 'weak cipher', 'hash', 'key management'],
+        'Path Traversal': ['path traversal', 'directory traversal', '../', 'file access'],
+        'Information Disclosure': ['information disclosure', 'sensitive data', 'exposure', 'information leak'],
+        'Denial of Service': ['denial of service', 'dos', 'resource exhaustion', 'infinite loop', 'uncontrolled'],
+        'Remote Code Execution': ['remote code execution', 'rce', 'arbitrary code', 'execute'],
+        'Privilege Escalation': ['privilege escalation', 'privilege', 'elevated', 'permission'],
+        'Resource Management': ['resource', 'memory leak', 'resource exhaustion', 'allocation'],
+        'Input Validation': ['input validation', 'validation', 'sanitization', 'untrusted input'],
+        'Race Condition': ['race condition', 'toctou', 'concurrent', 'synchronization'],
+        'Cross-Site Request Forgery': ['csrf', 'cross-site request forgery', 'request forgery'],
+        'Deserialization': ['deserialization', 'untrusted data', 'serialize'],
+    }
+    
+    # Combine all text fields for matching (convert to lowercase)
+    combined_text = f"{cwe_name} {weakness} {description} {cve_description}".lower()
+    
+    # Try to categorize based on keywords
+    for category, keywords in threat_keywords.items():
+        if any(keyword in combined_text for keyword in keywords):
+            return category
+    
+    # If no category matched, use CWE name or return "Other"
+    if cwe_name and cwe_name.strip() and cwe_name.lower() != 'nan':
+        return cwe_name[:50].title()
+    
+    return 'Other'
+
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
@@ -51,7 +90,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('=' * 70))
-        self.stdout.write(self.style.SUCCESS('WORLDWIDE Cyber Threat Forecasting'))
+        self.stdout.write(self.style.SUCCESS('US Cyber Threat Forecasting'))
         self.stdout.write(self.style.SUCCESS('=' * 70))
         
         weeks = options['weeks']
@@ -63,7 +102,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  Forecast Horizon: {weeks} weeks")
         self.stdout.write(f"  Historical Data: {history_weeks} weeks")
         self.stdout.write(f"  Lookback Period: {lookback_days} days")
-        self.stdout.write(f"  Analysis Scope: WORLDWIDE (all countries)")
+        self.stdout.write(f"  Analysis Scope: US ONLY")
         self.stdout.write(f"  Dry Run: {dry_run}")
         
         # Step 1: Load REAL CVE/CWE data from database
@@ -108,39 +147,37 @@ class Command(BaseCommand):
             self.stdout.write(f"  → No CWE data needed (CVEs don't have CWE IDs)")
         
         # Simulate threat intelligence events from CVE data
-        # Each CVE represents multiple detection events across time and geography
+        # Each CVE represents an actual threat with real published date
+        # ONLY US DATA
         countries = [
-            ('SG', 'Singapore'),
-            ('US', 'United States'),
-            ('CN', 'China'),
-            ('IN', 'India'),
-            ('GB', 'United Kingdom'),
-            ('AU', 'Australia')
+            ('US', 'United States')
         ]
         
+        # Use real CVE data from database
+        
+        # Use real CVE data from database
+        # Each CVE record represents an actual threat with real published date
         threat_data = []
         
-        # Use fewer CVEs for faster processing (50-75 is plenty)
-        sample_size = min(len(nvd_records), 75)  # Reduced from 150 to 75
-        sampled_cves = random.sample(nvd_records, sample_size)
+        self.stdout.write(f"  → Processing {len(nvd_records)} CVEs from database...")
         
-        self.stdout.write(f"  → Processing {sample_size} CVEs to generate threat events...")
-        
-        for nvd in sampled_cves:
-            # Each CVE generates multiple simulated threat detection events
-            # based on its severity and exploit likelihood
+        for nvd in nvd_records:
             cve_id = nvd['id']
             cwe_id = nvd.get('cwe_id', '')
             description = nvd.get('value', '').lower()
+            published_date = nvd.get('published', '')
             
-            # Determine threat frequency based on CVE characteristics
-            # Reduced numbers for faster processing and lower API costs
-            if 'critical' in description or nvd.get('vulnstatus') == 'Analyzed':
-                num_events = random.randint(8, 15)  # Reduced from 15-30
-            elif 'high' in description:
-                num_events = random.randint(5, 10)  # Reduced from 8-20
-            else:
-                num_events = random.randint(2, 6)   # Reduced from 3-12
+            # Parse the published date from the CVE data
+            try:
+                if published_date:
+                    # Handle different date formats (ISO format, etc.)
+                    timestamp = pd.to_datetime(published_date)
+                else:
+                    # If no date, skip this record
+                    continue
+            except Exception:
+                # Skip records with invalid dates
+                continue
             
             # Get CWE details for threat tags
             cwe_info = cwe_lookup.get(cwe_id)
@@ -163,37 +200,45 @@ class Command(BaseCommand):
             if not tags:
                 tags = ['exploit', 'vulnerability']
             
+            # Classify threat type based on CWE and CVE data
+            cwe_name = cwe_info.name if cwe_info else ''
+            weakness = cwe_info.weakness_abstraction if cwe_info else ''
+            threat_type = classify_threat_type(
+                cwe_name=cwe_name,
+                weakness=weakness,
+                description=nvd.get('description', ''),
+                cve_description=nvd.get('value', '')
+            )
+            
             # Parse CVSS score from description or default
             cvss_score = 5.0
             if 'critical' in description:
-                cvss_score = random.uniform(9.0, 10.0)
+                cvss_score = 9.5
             elif 'high' in description:
-                cvss_score = random.uniform(7.0, 8.9)
+                cvss_score = 7.5
             elif 'medium' in description:
-                cvss_score = random.uniform(4.0, 6.9)
+                cvss_score = 5.5
+            elif 'low' in description:
+                cvss_score = 3.0
             
-            # Generate threat detection events
-            for _ in range(num_events):
-                country_code, country_name = random.choice(countries)
-                days_ago = random.randint(0, lookback_days)
-                timestamp = timezone.now() - timedelta(days=days_ago)
-                
-                threat_data.append({
-                    'country_code': country_code,
-                    'country_name': country_name,
-                    'ip': f"{random.randint(1,223)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}",
-                    'cve_id': cve_id,
-                    'data': json.dumps({
-                        'cvss': round(cvss_score, 2),
-                        'epss': round(random.uniform(0.001, 0.5), 5),
-                        'tags': tags[:3],
-                        'cwe_id': cwe_id,
-                        'cwe_name': cwe_info.name if cwe_info else '',
-                        'published': nvd.get('published', ''),
-                        'status': nvd.get('vulnstatus', '')
-                    }),
-                    'timestamp': timestamp
-                })
+            # Use real CVE data with actual published timestamp
+            threat_data.append({
+                'country_code': 'US',
+                'country_name': 'United States',
+                'cve_id': cve_id,
+                'threat_type': threat_type,  # Add threat type classification
+                'data': json.dumps({
+                    'cvss': cvss_score,
+                    'tags': tags[:3],
+                    'cwe_id': cwe_id,
+                    'cwe_name': cwe_name,
+                    'threat_type': threat_type,  # Include in data JSON as well
+                    'published': published_date,
+                    'status': nvd.get('vulnstatus', ''),
+                    'description': nvd.get('value', '')
+                }),
+                'timestamp': timestamp
+            })
         
         df = pd.DataFrame(threat_data)
         threat_count = len(df)
@@ -204,18 +249,18 @@ class Command(BaseCommand):
         unique_countries = df['country_code'].nunique()
         unique_cves = df['cve_id'].nunique()
         date_range = f"{df['timestamp'].min().date()} to {df['timestamp'].max().date()}"
-        self.stdout.write(f"  → {unique_countries} countries analyzed")
+        self.stdout.write(f"  → Analyzing US data only")
         self.stdout.write(f"  → {unique_cves} unique CVEs tracked")
         self.stdout.write(f"  → Date range: {date_range}")
         self.stdout.write(self.style.SUCCESS("  → Using 100% REAL CVE/CWE data from your database"))
         
         if dry_run:
             self.stdout.write(self.style.WARNING("\n[DRY RUN] Stopping before API call"))
-            self.stdout.write(f"Would analyze {history_weeks} weeks of global data")
+            self.stdout.write(f"Would analyze {history_weeks} weeks of US data")
             return
         
-        # Step 2: Run WORLDWIDE forecast
-        self.stdout.write(f"\n{self.style.WARNING('Step 2:')} Running WORLDWIDE forecast...")
+        # Step 2: Run US forecast
+        self.stdout.write(f"\n{self.style.WARNING('Step 2:')} Running US forecast...")
         
         try:
             forecast_result = forecast_threats(
@@ -231,15 +276,15 @@ class Command(BaseCommand):
             return
         
         # Step 3: Display results
-        self.stdout.write(f"\n{self.style.WARNING('Step 3:')} WORLDWIDE Forecast Results")
+        self.stdout.write(f"\n{self.style.WARNING('Step 3:')} US Forecast Results")
         
         predictions = forecast_result.get('predictions', [])
-        self.stdout.write(f"  → Generated {len(predictions)} weekly predictions (WORLDWIDE)")
+        self.stdout.write(f"  → Generated {len(predictions)} weekly predictions (US ONLY)")
         
         if predictions:
             self.stdout.write("\n  Predictions by Week:")
             for i, pred in enumerate(predictions, 1):
-                region = pred.get('region', 'WORLDWIDE')
+                region = pred.get('region', 'US')
                 week = pred.get('week_start')
                 expected = pred.get('expected_count', 'N/A')
                 spike_prob = pred.get('spike_probability', 0)
@@ -247,8 +292,29 @@ class Command(BaseCommand):
                 
                 self.stdout.write(
                     f"    Week {i} ({week}): "
-                    f"{expected} threats worldwide (spike: {spike_prob:.0%}, conf: {confidence:.0%})"
+                    f"{expected} threats in US (spike: {spike_prob:.0%}, conf: {confidence:.0%})"
                 )
+        
+        # Add threat type distribution to forecast results
+        self.stdout.write(f"\n{self.style.WARNING('Step 3.5:')} Adding threat type analysis...")
+        threat_type_counts = {}
+        for record in threat_data:
+            threat_type = record.get('threat_type', 'Other')
+            threat_type_counts[threat_type] = threat_type_counts.get(threat_type, 0) + 1
+        
+        # Sort by count and convert to list
+        threat_types = [
+            {'threat_type': tt, 'count': count}
+            for tt, count in sorted(threat_type_counts.items(), key=lambda x: x[1], reverse=True)
+        ]
+        
+        forecast_result['threat_types'] = threat_types
+        forecast_result['total_threats'] = len(threat_data)
+        
+        self.stdout.write(f"  → Added {len(threat_types)} threat type categories")
+        self.stdout.write(f"  → Top 3 threat types:")
+        for tt in threat_types[:3]:
+            self.stdout.write(f"    - {tt['threat_type']}: {tt['count']} threats")
         
         # Step 4: Save results
         output_path = options['output']

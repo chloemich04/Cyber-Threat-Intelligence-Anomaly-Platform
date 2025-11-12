@@ -1,6 +1,6 @@
 """
 Cyber Threat Forecasting using Azure OpenAI GPT-5
-Predicts threat spikes and expected counts for regions over 4-week horizon
+Predicts threat spikes and expected counts for the United States over 4-week horizon
 """
 import json
 import pandas as pd
@@ -17,7 +17,7 @@ DEFAULT_TEMPERATURE = 0  # Deterministic for forecasting
 
 def aggregate_weekly_worldwide(df: pd.DataFrame, date_column: str = 'timestamp') -> pd.DataFrame:
     """
-    Aggregate threat data to weekly buckets for WORLDWIDE analysis.
+    Aggregate threat data to weekly buckets for US analysis.
     Provides richer data by combining all threats globally per week.
     
     Args:
@@ -25,7 +25,7 @@ def aggregate_weekly_worldwide(df: pd.DataFrame, date_column: str = 'timestamp')
         date_column: Name of the datetime column
     
     Returns:
-        Aggregated DataFrame with weekly features (worldwide)
+        Aggregated DataFrame with weekly features
     """
     # Ensure date column is datetime
     df[date_column] = pd.to_datetime(df[date_column])
@@ -45,14 +45,12 @@ def aggregate_weekly_worldwide(df: pd.DataFrame, date_column: str = 'timestamp')
             except:
                 return default
         return series.apply(extract)
-    
-    # Aggregate by week ONLY (worldwide, not by country)
+
+    # Aggregate by week ONLY (US data - no country grouping needed)
     agg = df.groupby('week_start').agg(
-        count_last_week=('ip', 'count'),
+        count_last_week=('cve_id', 'count'),
         mean_cvss=('data', lambda s: safe_json_get(s, 'cvss', 0).astype(float).mean()),
-        mean_epss=('data', lambda s: safe_json_get(s, 'epss', 0).astype(float).mean()),
         unique_cves=('cve_id', lambda s: s.nunique()),
-        distinct_ips=('ip', lambda s: s.nunique()),
         unique_countries=('country_code', lambda s: s.nunique()),
         top_countries=('country_code', lambda s: s.value_counts().head(5).to_dict()),
         top_tags=('data', lambda s: [
@@ -69,19 +67,16 @@ def aggregate_weekly_worldwide(df: pd.DataFrame, date_column: str = 'timestamp')
     # Calculate week-over-week growth rate
     agg['growth_rate'] = agg['count_last_week'].pct_change()
     
-    # Calculate new IP rate
-    agg['new_ip_rate'] = agg['distinct_ips'] / (agg['count_last_week'] + 1)
-    
     return agg
 
 
 def build_forecast_features(agg_df: pd.DataFrame, limit: int = 20) -> List[Dict[str, Any]]:
     """
     Convert aggregated DataFrame to compact feature records for LLM input.
-    Uses all available weekly data for worldwide analysis (no country filtering).
+    Uses US-only weekly data for analysis.
     
     Args:
-        agg_df: Aggregated weekly data (worldwide)
+        agg_df: Aggregated weekly data (US only)
         limit: Maximum number of weeks to include (more data = better predictions)
     
     Returns:
@@ -98,8 +93,7 @@ def build_forecast_features(agg_df: pd.DataFrame, limit: int = 20) -> List[Dict[
                 top_cves.append({
                     "id": cve_id,
                     "occurrences": int(count),
-                    "cvss": round(row['mean_cvss'], 2),
-                    "epss": round(row['mean_epss'], 5)
+                    "cvss": round(row['mean_cvss'], 2)
                 })
         
         # Extract top tags
@@ -115,20 +109,17 @@ def build_forecast_features(agg_df: pd.DataFrame, limit: int = 20) -> List[Dict[
                 })
         
         record = {
-            "region": "WORLDWIDE",
+            "region": "United States",
             "week_start": row['week_start'],
             "count_last_week": int(row['count_last_week']),
             "count_4week_avg": round(row['count_4week_avg'], 1),
             "growth_rate": round(row.get('growth_rate', 0), 3),
             "mean_cvss": round(row['mean_cvss'], 2),
-            "mean_epss": round(row['mean_epss'], 5),
             "unique_cves": int(row['unique_cves']),
             "unique_countries": int(row.get('unique_countries', 0)),
             "top_countries": top_countries,
             "top_tags": top_tags,
-            "top_cves": top_cves,
-            "distinct_ips": int(row['distinct_ips']),
-            "new_ip_rate": round(row['new_ip_rate'], 3)
+            "top_cves": top_cves
         }
         records.append(record)
     
@@ -140,22 +131,22 @@ def create_forecast_prompt(
     forecast_weeks: int = FORECAST_HORIZON_WEEKS
 ) -> str:
     """
-    Build the user prompt for worldwide threat forecasting.
+    Build the user prompt for United States threat forecasting.
     
     Args:
-        feature_records: List of aggregated feature dictionaries (weekly, worldwide)
+        feature_records: List of aggregated feature dictionaries (weekly, US only)
         forecast_weeks: Number of weeks to forecast
     
     Returns:
         Formatted prompt string
     """
-    prompt = f"""Input: aggregated WORLDWIDE threat intelligence records (weekly) for forecast_horizon_weeks = {forecast_weeks}.
-Analyze global threat trends and provide forecasts for the next {forecast_weeks} weeks.
+    prompt = f"""Input: aggregated United States threat intelligence records (weekly) for forecast_horizon_weeks = {forecast_weeks}.
+Analyze US threat trends and provide forecasts for the next {forecast_weeks} weeks.
 
-Historical Data (recent weeks):
+Historical Data (recent weeks - US only):
 {json.dumps(feature_records, indent=2)}
 
-Return JSON exactly following the schema with WORLDWIDE predictions for the NEXT {forecast_weeks} weeks."""
+Return JSON exactly following the schema with United States predictions for the NEXT {forecast_weeks} weeks."""
     
     return prompt
 
@@ -177,14 +168,14 @@ def get_threat_forecast(
         Parsed JSON forecast with predictions
     """
     # System message defining the task and output format
-    system_message = """You are an expert cyber-threat forecaster analyzing WORLDWIDE threat intelligence data. Output MUST be valid JSON following the provided schema. Temperature is 0. Use only the supplied input features; do not invent external facts. 
+    system_message = """You are an expert cyber-threat forecaster analyzing United States threat intelligence data. Output MUST be valid JSON following the provided schema. Temperature is 0. Use only the supplied input features; do not invent external facts. 
 
 For each weekly forecast, return:
-- expected_count (integer): predicted number of threats worldwide
+- expected_count (integer): predicted number of threats in the United States
 - expected_count_ci [lower, upper]: 90% confidence interval
 - spike_probability (0..1): likelihood of significant threat spike
 - top_signals: list of up to 5 signals (CVEs, countries, tags) driving the forecast with importance scores summing <=1
-- explanation (2-3 sentences): reasoning based on historical trends, CVE patterns, and geographical distribution
+- explanation (2-3 sentences): reasoning based on historical trends, CVE patterns, and US threat landscape
 - confidence (0..1): forecast confidence level
 
 Keep output compact and machine-parseable.
@@ -194,7 +185,7 @@ Output schema:
   "forecast_horizon_weeks": 4,
   "predictions": [
     {
-      "region": "WORLDWIDE",
+      "region": "United States",
       "week_start": "2025-11-10",
       "expected_count": 1250,
       "expected_count_ci": [1050, 1450],
@@ -204,14 +195,15 @@ Output schema:
         {"signal_type":"cve","id":"CVE-2009-0796","score":0.34},
         {"signal_type":"tag","id":"cloud","score":0.21}
       ],
-      "explanation": "Rising EPSS on older Apache CVEs and multiple recent scans from ASN AS14061.",
+      "explanation": "Rising EPSS on older Apache CVEs and multiple recent scans from US infrastructure.",
       "confidence": 0.72
     }
   ],
   "metadata": {
     "model": "gpt-5-2025-01-01-preview",
     "temperature": 0,
-    "aggregation_method": "weekly_count_by_country"
+    "aggregation_method": "weekly_count_us_only",
+    "region_analyzed": "United States"
   }
 }"""
     
@@ -260,31 +252,31 @@ def forecast_threats(
     forecast_weeks: int = FORECAST_HORIZON_WEEKS
 ) -> Dict[str, Any]:
     """
-    End-to-end WORLDWIDE threat forecasting pipeline.
+    End-to-end United States threat forecasting pipeline.
     
     Args:
-        df: Raw threat data DataFrame
+        df: Raw threat data DataFrame (US only)
         date_column: Name of timestamp column
         weeks_of_history: Number of historical weeks to include (more data = better predictions)
         forecast_weeks: Forecast horizon in weeks
     
     Returns:
-        Complete forecast results with worldwide predictions
+        Complete forecast results with US predictions
     """
-    # Step 1: Aggregate data WORLDWIDE
-    print("Aggregating data by week (worldwide analysis)...")
+    # Step 1: Aggregate data (US only)
+    print("Aggregating data by week (United States analysis)...")
     agg_df = aggregate_weekly_worldwide(df, date_column)
-    print(f"  → {len(agg_df)} weekly records (worldwide)")
+    print(f"  → {len(agg_df)} weekly records (US only)")
     
     # Step 2: Build feature records (use more historical weeks)
     print(f"Building feature records (using {weeks_of_history} weeks of history)...")
     feature_records = build_forecast_features(agg_df, limit=weeks_of_history)
-    print(f"  → {len(feature_records)} weeks of data prepared for AI analysis")
+    print(f"  → {len(feature_records)} weeks of US data prepared for AI analysis")
     
     # Step 3: Get forecast from LLM
-    print("Calling Azure OpenAI GPT-5 for worldwide forecast...")
+    print("Calling Azure OpenAI GPT-5 for United States forecast...")
     forecast_result = get_threat_forecast(feature_records, max_tokens=1500)
-    print(f"  → Received {len(forecast_result.get('predictions', []))} weekly predictions")
+    print(f"  → Received {len(forecast_result.get('predictions', []))} weekly predictions for United States")
     
     return forecast_result
 
