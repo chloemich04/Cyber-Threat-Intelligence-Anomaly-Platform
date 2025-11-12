@@ -61,29 +61,23 @@ const USHeatmap = () => {
   const [selectedState, setSelectedState] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/fake-data/heatmap-data/")
+    fetch("http://127.0.0.1:8000/api/heatmap_data/")
       .then((res) => res.json())
       .then((rawData) => {
         const agg = rawData.reduce((acc, item) => {
           const code = item.region_code;
-          if (!acc[code]) acc[code] = { total: 0, count: 0, points: [] };
-          acc[code].total += item.epss || 0;
-          acc[code].count += 1;
-          acc[code].points.push(item);
+
+          if (!acc[code])
+              acc[code] = 0;
+
+          acc[code] += item.total_cves || 0;
           return acc;
         }, {});
 
         const mappedData = {};
         for (const code in stateMap) {
           const name = stateMap[code];
-          if (agg[code]) {
-            mappedData[name] = {
-              avgEpss: agg[code].total / agg[code].count,
-              points: agg[code].points,
-            };
-          } else {
-            mappedData[name] = null; // No data
-          }
+          mappedData[name] = agg[code] ? agg[code] : 0
         }
 
         setData(mappedData);
@@ -91,18 +85,19 @@ const USHeatmap = () => {
       .catch((err) => console.error("Error fetching data:", err));
   }, []);
 
-  const getColor = (stateData) => {
-    if (!stateData) return "#444"; // Gray for no data
-    const avgEpss = stateData.avgEpss;
-    const value = Math.min(Math.max(avgEpss, 0), 1);
-    const red = Math.floor(255 * value);
-    const green = Math.floor(255 * (1 - value));
-    return `rgb(${red},${green},50)`;
+  const getColor = (count) => {
+    if (!count || count === 0)
+        return "#444"; // gray ~ no data
+    const max = Math.max(...Object.values(data));
+    const intensity = Math.min(Math.log(count + 1) / Math.log(max + 1), 1); // logarithmic scale
+    const red = Math.floor(255 * intensity);
+    const green = Math.floor(255 * (1 - intensity));
+    return `rgb(${red}, ${green}, 50)`; // green -> red gradient
   };
 
   return (
     <div style={{ display: "flex", gap: "20px" }}>
-      <div style={{ width: "70%" }}>
+      <div style={{ width: "70%", position: "relative" }}>
         <ComposableMap
           projection="geoAlbersUsa"
           projectionConfig={{ scale: 1000, translate: [480, 300] }}
@@ -112,19 +107,18 @@ const USHeatmap = () => {
             {({ geographies }) =>
               geographies.map((geo) => {
                 const stateName = geo.properties.name;
-                const stateData = data[stateName];
+                const count = data[stateName] || 0;
 
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill={getColor(stateData)}
+                    fill={getColor(count)}
                     stroke="#FFF"
                     onClick={() =>
                       setSelectedState({
                         name: stateName,
-                        points: stateData ? stateData.points : [],
-                        avgEpss: stateData ? stateData.avgEpss : 0,
+                        count: count,
                       })
                     }
                     style={{
@@ -134,8 +128,7 @@ const USHeatmap = () => {
                     }}
                   >
                     <title>
-                      {stateName} — Avg EPS:{" "}
-                      {stateData ? stateData.avgEpss.toFixed(4) : "No data"}
+                      {stateName} — Total CVEs: {count > 0 ? count : "No data"}
                     </title>
                   </Geography>
                 );
@@ -162,22 +155,16 @@ const USHeatmap = () => {
         {selectedState ? (
           <>
             <h3>{selectedState.name}</h3>
-            <p>
-              Average EPSS: <strong>{selectedState.avgEpss.toFixed(4)}</strong>
-            </p>
-            <p>
-              Showing <strong>{selectedState.points.length}</strong> records
-            </p>
-            <ul>
-              {selectedState.points.map((p, i) => (
-                <li key={i} style={{ marginBottom: "8px" }}>
-                  Lat: {p.latitude}, Lon: {p.longitude}, EPSS: {p.epss.toFixed(5)}
-                </li>
-              ))}
-            </ul>
+            {selectedState.count > 0 ? (
+              <p>
+                Total CVEs: <strong>{selectedState.count}</strong>
+              </p>
+            ) : (
+              <p>No CVE data available.</p>
+            )}
           </>
         ) : (
-          <p>Select a state to view threat data.</p>
+          <p>Select a state to view CVE data.</p>
         )}
       </div>
     </div>
