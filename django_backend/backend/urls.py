@@ -20,5 +20,5 @@ from cyberintel import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('cyberintel.urls'))
+    path('api/', include('cyberintel.urls')),
 ]

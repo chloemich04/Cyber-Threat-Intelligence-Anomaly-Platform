@@ -20,12 +20,6 @@ export default function App(){
 
   const [threats, setThreats] = useState([]);
 
-  useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/threat/')
-      .then(res => res.json())
-      .then(data => setThreats(data))
-      .catch(err => console.error('Error fetching threats:', err));
-  }, []);
 
 
   const renderPage = () => {
@@ -92,7 +86,7 @@ export default function App(){
         <section className="panel" style={{gridColumn: '1 / 2'}}>
           <h3>Key Metrics</h3>
           <div className="kpis">
-            <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">{threats.length}</div></div>
+            <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">-</div></div>
             <div className="kpi"><div className="label">Average Loss / Incident</div><div className="value">—</div></div>
             <div className="kpi"><div className="label">Exposure Score (0–100)</div><div className="value">—</div></div>
             <div className="kpi"><div className="label">KEV / Active Exploits</div><div className="value">—</div></div>
@@ -102,10 +96,21 @@ export default function App(){
         {/* Heatmap */}
         <section className="panel" style={{gridColumn: '1 / 2'}}>
           <h3>Threat Activity Heatmap</h3>
-          <div className="heatmap" aria-label="Geographic heatmap">
-            <USHeatmap />
+          <div className="heatmap" style={{ width: '100%', height: '500px' }} aria-label="Geographic heatmap">
+              <USHeatmap />
           </div>
-          <div className="legend"><span>Low</span><span className="bar" aria-hidden="true"></span><span>High</span></div>
+            <div className="legend"><span>Low</span>
+                <div className="bar" aria-hidden="true"></div><span>High</span>
+            </div>
+
+          <div className="legend-container" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
+            {/* No Data Box */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '16px', height: '16px', backgroundColor: '#555', borderRadius: '4px', border: '1px solid #fff' }}></div>
+              <span>No Data</span>
+            </div>
+          </div>
+
         </section>
 
         {/* Charts Section - Historical Data (Not AI Predictions) */}
@@ -135,8 +140,9 @@ export default function App(){
                 <h3 className="chart-title">Breach Type Distribution</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '450px', width: '100%'}}>
-                  <SeverityDonutChart threats={threats} />
+                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                    {/*<SeverityDonutChart threats={threats} />*/}
+                    Donut Chart Coming Soon
                 </div>
               </div>
             </div>
@@ -146,9 +152,10 @@ export default function App(){
                 <h3 className="chart-title">Top Vulnerable Technologies</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '600px', width: '100%'}}>
+                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
                   <div>
-                      <TopThreatTypesChart />
+                      {/*<TopThreatTypesChart /> */}
+                      Bar Chart Coming Soon
                   </div>
                 </div>
               </div>
