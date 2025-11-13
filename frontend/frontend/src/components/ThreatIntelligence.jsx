@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import ForecastDisplay from './ForecastDisplay';
 import LossBySectorBarChart from './LossBySectorBarChart';
 import TopThreatTypesChart from './TopThreatTypesChart';
 import PDFExport from './PDFExport';
+const PredictedTypesDonut = React.lazy(() => import('./PredictedTypesDonut'));
+
+function PredictedTypesDonutWrapper({ predictedTypes }) {
+  return (
+    <Suspense fallback={<div style={{height: 240, display:'flex', alignItems:'center', justifyContent:'center'}}>Loading chart...</div>}>
+      <PredictedTypesDonut predictedTypes={predictedTypes} />
+    </Suspense>
+  );
+}
 
 // ==========================================
 // AUTO-FORECAST CONFIGURATION
@@ -223,9 +232,59 @@ export default function ThreatIntelligence() {
               </div>
             </div>
             <div className="kpi">
-              <div className="label">Threat Types Identified</div>
+              <div className="label">Monthly Predicted Attacks</div>
               <div className="value">
-                {forecastData?.threat_types?.length || '—'}
+                {typeof forecastData?.monthly_predicted_attacks === 'number'
+                  ? forecastData.monthly_predicted_attacks.toLocaleString()
+                  : '—'}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Key Signals chips and predicted types summary */}
+        <section className="panel" style={{gridColumn: '1 / -1'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <h3 style={{margin: 0}}>Key Signals & Predicted Types</h3>
+            <div style={{fontSize: '0.9rem', color: 'var(--muted)'}}>
+              These are model-predicted signals and predicted threat-type distribution.
+            </div>
+          </div>
+
+          <div style={{marginTop: '0.75rem'}}>
+            {/* Key signals chips */}
+            <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem'}}>
+              {forecastData?.key_signals_user_friendly && forecastData.key_signals_user_friendly.length > 0 ? (
+                forecastData.key_signals_user_friendly.map((s, i) => (
+                  <div key={`ks-${i}`} className="chip" title={`${s.type} — score: ${Math.round((s.score || 0) * 100)}%`}>
+                    <span style={{fontWeight: 600}}>{s.label}</span>
+                    <span style={{marginLeft: '0.5rem', color: 'var(--muted)', fontSize: '0.85rem'}}> {Math.round((s.score || 0) * 100)}%</span>
+                  </div>
+                ))
+              ) : (
+                <div style={{color: 'var(--muted)'}}>No key signals available yet.</div>
+              )}
+            </div>
+
+            {/* Predicted threat types list */}
+            <div style={{display: 'flex', gap: '1rem', alignItems: 'flex-start'}}>
+              <div style={{flex: 1, display: 'flex', gap: '1rem'}}>
+                <div style={{flex: 1}}>
+                  {forecastData?.predicted_threat_types && forecastData.predicted_threat_types.length > 0 ? (
+                    <ul style={{listStyle: 'none', padding: 0, margin: 0}}>
+                      {forecastData.predicted_threat_types.map((pt, idx) => (
+                        <li key={`pt-${idx}`} style={{display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px dashed rgba(255,255,255,0.03)'}}>
+                          <div style={{fontWeight: 600}}>{pt.threat_type}</div>
+                          <div style={{color: 'var(--muted)'}}>{Math.round((pt.probability || 0) * 100)}%</div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div style={{color: 'var(--muted)'}}>No model-predicted threat types available yet.</div>
+                  )}
+                </div>
+
+                {/* Donut chart moved to charts section below */}
               </div>
             </div>
           </div>
@@ -241,43 +300,18 @@ export default function ThreatIntelligence() {
         <section className="panel charts-full-width">
           <h3>AI-Powered Analytics & Insights</h3>
           <div className="charts">
-            <div className="chart-box" aria-label="Loss amount by sector bar chart" data-chart-id="loss-by-sector">
-              <LossBySectorBarChart />
-            </div>
-            
-            <div className="chart-box" aria-label="Top threat types for next 4 weeks" data-chart-id="threat-severity">
-              <TopThreatTypesChart />
-            </div>
-            
-            <div className="chart-box" aria-label="Top predicted CVEs" data-chart-id="top-cves">
+           
+            {/* Removed: Threat Trend Predictions and Geographic Threat Forecast as requested */}
+
+            <div className="chart-box" aria-label="Predicted threat types donut" data-chart-id="predicted-donut">
               <div className="chart-header">
-                <h3 className="chart-title">Top Predicted CVE Threats</h3>
+                <h3 className="chart-title">Predicted Threat Types</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  CVE Ranking Coming Soon
-                </div>
-              </div>
-            </div>
-            
-            <div className="chart-box" aria-label="Threat trend predictions" data-chart-id="threat-trends">
-              <div className="chart-header">
-                <h3 className="chart-title">Threat Trend Predictions</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  Trend Analysis Coming Soon
-                </div>
-              </div>
-            </div>
-            
-            <div className="chart-box" aria-label="Geographic threat forecast" data-chart-id="geographic">
-              <div className="chart-header">
-                <h3 className="chart-title">Geographic Threat Forecast</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  Geographic Predictions Coming Soon
+                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                  <div style={{width: 260}}>
+                    <PredictedTypesDonutWrapper predictedTypes={forecastData?.predicted_threat_types} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -286,7 +320,7 @@ export default function ThreatIntelligence() {
 
       </main>
 
-      <footer>© 2025 CTI Dashboard — AI-Powered Threat Intelligence</footer>
+      <footer>© 2025 CTI Dashboard</footer>
     </>
   );
 }

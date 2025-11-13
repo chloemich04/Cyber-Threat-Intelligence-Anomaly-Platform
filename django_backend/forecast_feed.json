@@ -1,0 +1,366 @@
+{
+  "generated_at": null,
+  "cve_rows": [
+    {
+      "id": "CVE-2018-1000075",
+      "published": "2018-03-13T15:29:00.550",
+      "vulnstatus": "Modified",
+      "value": "RubyGems version Ruby 2.2 series: 2.2.9 and earlier, Ruby 2.3 series: 2.3.6 and earlier, Ruby 2.4 series: 2.4.3 and earlier, Ruby 2.5 series: 2.5.0 and earlier, prior to trunk revision 62422 contains a infinite loop caused by negative size vulnerability in ruby gem package tar header that can result in a negative size could cause an infinite loop.. This vulnerability appears to have been fixed in 2.7.6.",
+      "cwe_id": "CWE-835",
+      "cwe_name": "Loop with Unreachable Exit Condition ('Infinite Loop')",
+      "weakness_abstraction": "Base",
+      "description": "The product contains an iteration or loop with an exit condition that cannot be reached, i.e., an infinite loop."
+    },
+    {
+      "id": "CVE-2018-2368",
+      "published": "2018-03-01T17:29:00.350",
+      "vulnstatus": "Modified",
+      "value": "SAP NetWeaver System Landscape Directory, LM-CORE 7.10, 7.20, 7.30, 7.31, 7.40, does not perform any authentication checks for functionalities that require user identity.",
+      "cwe_id": "CWE-306",
+      "cwe_name": "Missing Authentication for Critical Function",
+      "weakness_abstraction": "Base",
+      "description": "The product does not perform any authentication for functionality that requires a provable user identity or consumes a significant amount of resources."
+    },
+    {
+      "id": "CVE-2017-18208",
+      "published": "2018-03-01T05:29:00.320",
+      "vulnstatus": "Modified",
+      "value": "The madvise_willneed function in mm/madvise.c in the Linux kernel before 4.14.4 allows local users to cause a denial of service (infinite loop) by triggering use of MADVISE_WILLNEED for a DAX mapping.",
+      "cwe_id": "CWE-835",
+      "cwe_name": "Loop with Unreachable Exit Condition ('Infinite Loop')",
+      "weakness_abstraction": "Base",
+      "description": "The product contains an iteration or loop with an exit condition that cannot be reached, i.e., an infinite loop."
+    },
+    {
+      "id": "CVE-2018-7557",
+      "published": "2018-02-28T07:29:00.463",
+      "vulnstatus": "Modified",
+      "value": "La funci\u00f3n decode_init en libavcodec/utvideodec.c en FFmpeg versi\u00f3n 2.8 hasta la versi\u00f3n 3.4.2 permite a atacantes remotos causar una denegaci\u00f3n de servicio (lectura fuera de array) utilizando un archivo AVI manipulado con dimensiones manipuladas en datos de submuestreo de crominancia",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4893",
+      "published": "2018-02-27T05:29:01.110",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of XPS font processing. A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4889",
+      "published": "2018-02-27T05:29:00.890",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of the XPS image conversion. A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4887",
+      "published": "2018-02-27T05:29:00.783",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of the Unicode mapping module that is invoked when processing Enhanced Metafile Format (EMF) data (during image conversion). A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4886",
+      "published": "2018-02-27T05:29:00.737",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation occurs in the image conversion engine when processing Enhanced Metafile Format (EMF) data related to handling of bitmap rectangles. A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4885",
+      "published": "2018-02-27T05:29:00.687",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of Enhanced Metafile Format processing engine (within the image conversion module). A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4884",
+      "published": "2018-02-27T05:29:00.627",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of the image conversion engine when processing Enhanced Metafile Format (EMF) data that embeds an image in the bitmap (BMP) file format. A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4883",
+      "published": "2018-02-27T05:29:00.577",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs because of computation that reads data that is past the end of the target buffer; the computation is part of the image conversion engine that handles Enhanced Metafile Format (EMF). A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4882",
+      "published": "2018-02-27T05:29:00.530",
+      "vulnstatus": "Modified",
+      "value": "Se ha descubierto un problema en Adobe Acrobat Reader 2018.009.20050 y anteriores, 2017.011.30070 y anteriores y 2015.006.30394 y anteriores. Esta vulnerabilidad ocurre como resultado de un c\u00e1lculo que lee datos m\u00e1s all\u00e1 del final del b\u00fafer objetivo; el c\u00e1lculo forma parte del analizador de literales de cadena. Un ataque con \u00e9xito podr\u00eda conducir a la exposici\u00f3n de datos sensibles.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4881",
+      "published": "2018-02-27T05:29:00.470",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of the image conversion module that reads bitmap image file (BMP) data. A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4880",
+      "published": "2018-02-27T05:29:00.423",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of the conversion module that reads U3D data. A successful attack can lead to sensitive data exposure.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4879",
+      "published": "2018-02-27T05:29:00.390",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions, 2017.011.30070 and earlier versions, 2015.006.30394 and earlier versions. The vulnerability is caused by the computation that writes data past the end of the intended buffer; the computation is part of the image conversion module that processes Enhanced Metafile Format Plus (EMF+) data. An attacker can potentially leverage the vulnerability to corrupt sensitive data or execute arbitrary code.",
+      "cwe_id": "CWE-787",
+      "cwe_name": "Out-of-bounds Write",
+      "weakness_abstraction": "Base",
+      "description": "The product writes data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-4876",
+      "published": "2018-02-27T05:29:00.313",
+      "vulnstatus": "Modified",
+      "value": "Adobe Experience Manager versions 6.3, 6.2, and 6.1 are vulnerable to cross-site scripting via a bypass of the Sling XSSAPI#getValidHref function.",
+      "cwe_id": "CWE-79",
+      "cwe_name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+      "weakness_abstraction": "Base",
+      "description": "The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page that is served to other users."
+    },
+    {
+      "id": "CVE-2018-4875",
+      "published": "2018-02-27T05:29:00.267",
+      "vulnstatus": "Modified",
+      "value": "Adobe Experience Manager versions 6.1 and 6.0 are vulnerable to a reflected cross-site scripting vulnerability related to the handling of malicious content embedded in image files uploaded to the DAM.",
+      "cwe_id": "CWE-79",
+      "cwe_name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+      "weakness_abstraction": "Base",
+      "description": "The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page that is served to other users."
+    },
+    {
+      "id": "CVE-2018-7490",
+      "published": "2018-02-26T22:29:00.697",
+      "vulnstatus": "Modified",
+      "value": "uWSGI before 2.0.17 mishandles a DOCUMENT_ROOT check during use of the --php-docroot option, allowing directory traversal.",
+      "cwe_id": "CWE-22",
+      "cwe_name": "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+      "weakness_abstraction": "Base",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of the restricted directory."
+    },
+    {
+      "id": "CVE-2018-0908",
+      "published": "2018-02-26T22:29:00.633",
+      "vulnstatus": "Modified",
+      "value": "Microsoft Identity Manager 2016 SP1 allows an attacker to gain elevated privileges when it does not properly sanitize a specially crafted attribute value being displayed to a user on an affected MIM 2016 server, aka \"Microsoft Identity Manager XSS Elevation of Privilege Vulnerability.\"",
+      "cwe_id": "CWE-79",
+      "cwe_name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+      "weakness_abstraction": "Base",
+      "description": "The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page that is served to other users."
+    },
+    {
+      "id": "CVE-2017-16814",
+      "published": "2018-02-26T22:29:00.570",
+      "vulnstatus": "Modified",
+      "value": "A Directory Traversal issue was discovered in the Foxit MobilePDF app before 6.1 for iOS. This occurs by abusing the URL + escape character during a Wi-Fi transfer, which could be exploited by attackers to bypass intended restrictions on local application files.",
+      "cwe_id": "CWE-22",
+      "cwe_name": "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+      "weakness_abstraction": "Base",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of the restricted directory."
+    },
+    {
+      "id": "CVE-2017-16229",
+      "published": "2018-02-26T22:29:00.477",
+      "vulnstatus": "Modified",
+      "value": "En la versi\u00f3n 2.8.1 de la gema Ox para Ruby, el proceso se cierra inesperadamente con una sobrelectura de b\u00fafer basada en pila en la funci\u00f3n read_from_str en sax_buf.c cuando se proporciona una entrada manipulada a sax_parse.",
+      "cwe_id": "CWE-125",
+      "cwe_name": "Out-of-bounds Read",
+      "weakness_abstraction": "Base",
+      "description": "The product reads data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2017-11634",
+      "published": "2018-02-26T22:29:00.350",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered on Wireless IP Camera 360 devices. Remote attackers can discover a weakly encoded admin password by connecting to TCP port 9527 and reading the password field of the debugging information, e.g., nTBCS19C corresponds to a password of 123456.",
+      "cwe_id": "CWE-798",
+      "cwe_name": "Use of Hard-coded Credentials",
+      "weakness_abstraction": "Base",
+      "description": "The product contains hard-coded credentials, such as a password or cryptographic key."
+    },
+    {
+      "id": "CVE-2017-11632",
+      "published": "2018-02-26T22:29:00.243",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered on Wireless IP Camera 360 devices. A root account with a known SHA-512 password hash exists, which makes it easier for remote attackers to obtain administrative access via a TELNET session.",
+      "cwe_id": "CWE-798",
+      "cwe_name": "Use of Hard-coded Credentials",
+      "weakness_abstraction": "Base",
+      "description": "The product contains hard-coded credentials, such as a password or cryptographic key."
+    },
+    {
+      "id": "CVE-2018-7492",
+      "published": "2018-02-26T20:29:00.333",
+      "vulnstatus": "Modified",
+      "value": "A NULL pointer dereference was found in the net/rds/rdma.c __rds_rdma_map() function in the Linux kernel before 4.14.7 allowing local attackers to cause a system panic and a denial-of-service, related to RDS_GET_MR and RDS_GET_MR_FOR_DEST.",
+      "cwe_id": "CWE-476",
+      "cwe_name": "NULL Pointer Dereference",
+      "weakness_abstraction": "Base",
+      "description": "The product dereferences a pointer that it expects to be valid but is NULL."
+    },
+    {
+      "id": "CVE-2018-7491",
+      "published": "2018-02-26T17:29:00.350",
+      "vulnstatus": "Modified",
+      "value": "In PrestaShop through 1.7.2.5, a UI-Redressing/Clickjacking vulnerability was found that might lead to state-changing impact in the context of a user or an admin, because the generateHtaccess function in classes/Tools.php sets neither X-Frame-Options nor 'Content-Security-Policy \"frame-ancestors' values.",
+      "cwe_id": "CWE-1021",
+      "cwe_name": "Improper Restriction of Rendered UI Layers or Frames",
+      "weakness_abstraction": "Base",
+      "description": "The web application does not restrict or incorrectly restricts frame objects or UI layers that belong to another application or domain, which can lead to user confusion about which interface the user is interacting with."
+    },
+    {
+      "id": "CVE-2018-7448",
+      "published": "2018-02-26T17:29:00.287",
+      "vulnstatus": "Modified",
+      "value": "Remote code execution vulnerability in /cmsms-2.1.6-install.php/index.php in CMS Made Simple version 2.1.6 allows remote attackers to inject arbitrary PHP code via the \"timezone\" parameter in step 4 of a fresh installation procedure.",
+      "cwe_id": "CWE-78",
+      "cwe_name": "Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+      "weakness_abstraction": "Base",
+      "description": "The product constructs all or part of an OS command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended OS command when it is sent to a downstream component."
+    },
+    {
+      "id": "CVE-2018-7489",
+      "published": "2018-02-26T15:29:00.417",
+      "vulnstatus": "Modified",
+      "value": "FasterXML jackson-databind before 2.7.9.3, 2.8.x before 2.8.11.1 and 2.9.x before 2.9.5 allows unauthenticated remote code execution because of an incomplete fix for the CVE-2017-7525 deserialization flaw. This is exploitable by sending maliciously crafted JSON input to the readValue method of the ObjectMapper, bypassing a blacklist that is ineffective if the c3p0 libraries are available in the classpath.",
+      "cwe_id": "CWE-184",
+      "cwe_name": "Incomplete List of Disallowed Inputs",
+      "weakness_abstraction": "Base",
+      "description": "The product implements a protection mechanism that relies on a list of inputs (or properties of inputs) that are not allowed by policy or otherwise require other action to neutralize before additional processing takes place, but the list is incomplete."
+    },
+    {
+      "id": "CVE-2018-7487",
+      "published": "2018-02-26T15:29:00.370",
+      "vulnstatus": "Modified",
+      "value": "There is a heap-based buffer overflow in the LoadPCX function of in_pcx.cpp in sam2p 0.49.4. A Crafted input will lead to a denial of service or possibly unspecified other impact.",
+      "cwe_id": "CWE-787",
+      "cwe_name": "Out-of-bounds Write",
+      "weakness_abstraction": "Base",
+      "description": "The product writes data past the end, or before the beginning, of the intended buffer."
+    },
+    {
+      "id": "CVE-2018-7486",
+      "published": "2018-02-26T14:29:00.447",
+      "vulnstatus": "Modified",
+      "value": "Blue River Mura CMS before v7.0.7029 supports inline function calls with an [m] tag and [/m] end tag, without proper restrictions on file types or pathnames, which allows remote attackers to execute arbitrary code via an [m]$.dspinclude(\"../pathname/executable.jpeg\")[/m] approach, where executable.jpeg contains ColdFusion Markup Language code. This can be exploited in conjunction with a CKFinder feature that allows file upload.",
+      "cwe_id": "CWE-22",
+      "cwe_name": "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+      "weakness_abstraction": "Base",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of the restricted directory."
+    },
+    {
+      "id": "CVE-2018-7463",
+      "published": "2018-02-26T13:29:00.250",
+      "vulnstatus": "Modified",
+      "value": "SQL injection vulnerability in files.php in the \"files\" component in ASANHAMAYESH CMS 3.4.6 allows a remote attacker to execute arbitrary SQL commands via the \"id\" parameter.",
+      "cwe_id": "CWE-89",
+      "cwe_name": "Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+      "weakness_abstraction": "Base",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL syntax in user-controllable inputs, the generated SQL query can cause those inputs to be interpreted as SQL instead of ordinary user data."
+    },
+    {
+      "id": "CVE-2017-9426",
+      "published": "2018-02-26T04:29:00.273",
+      "vulnstatus": "Modified",
+      "value": "ws.php in the Facetag extension 0.0.3 for Piwigo allows SQL injection via the imageId parameter in a facetag.changeTag or facetag.listTags action.",
+      "cwe_id": "CWE-89",
+      "cwe_name": "Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+      "weakness_abstraction": "Base",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL syntax in user-controllable inputs, the generated SQL query can cause those inputs to be interpreted as SQL instead of ordinary user data."
+    },
+    {
+      "id": "CVE-2017-9425",
+      "published": "2018-02-26T04:29:00.210",
+      "vulnstatus": "Modified",
+      "value": "The Facetag extension 0.0.3 for Piwigo allows XSS via the name parameter to ws.php in a facetag.changeTag action.",
+      "cwe_id": "CWE-79",
+      "cwe_name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+      "weakness_abstraction": "Base",
+      "description": "The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page that is served to other users."
+    },
+    {
+      "id": "CVE-2018-7484",
+      "published": "2018-02-26T02:29:00.487",
+      "vulnstatus": "Modified",
+      "value": "An issue was discovered in PureVPN through 5.19.4.0 on Windows. The client installation grants the Everyone group Full Control permission to the installation directory. In addition, the PureVPNService.exe service, which runs under NT Authority\\SYSTEM privileges, tries to load several dynamic-link libraries using relative paths instead of the absolute path. When not using a fully qualified path, the application will first try to load the library from the directory from which the application is started. As the residing directory of PureVPNService.exe is writable to all users, this makes the application susceptible to privilege escalation through DLL hijacking.",
+      "cwe_id": "CWE-426",
+      "cwe_name": "Untrusted Search Path",
+      "weakness_abstraction": "Base",
+      "description": "The product searches for critical resources using an externally-supplied search path that can point to resources that are not under the product's direct control."
+    },
+    {
+      "id": "CVE-2018-7476",
+      "published": "2018-02-25T19:29:00.267",
+      "vulnstatus": "Modified",
+      "value": "controllers/admin/Linkage.php in dayrui FineCms 5.3.0 has Cross Site Scripting (XSS) via the id or lid parameter in a c=linkage,m=import request to admin.php, because the xss_clean protection mechanism is defeated by crafted input that lacks a '<' or '>' character.",
+      "cwe_id": "CWE-79",
+      "cwe_name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+      "weakness_abstraction": "Base",
+      "description": "The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page that is served to other users."
+    },
+    {
+      "id": "CVE-2018-7471",
+      "published": "2018-02-25T07:29:00.337",
+      "vulnstatus": "Modified",
+      "value": "KingView 7.5SP1 has an integer overflow during stgopenstorage API read operations.",
+      "cwe_id": "CWE-190",
+      "cwe_name": "Integer Overflow or Wraparound",
+      "weakness_abstraction": "Base",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs, the value may become a very small or negative number."
+    },
+    {
+      "id": "CVE-2018-7466",
+      "published": "2018-02-25T07:29:00.210",
+      "vulnstatus": "Modified",
+      "value": "install/installNewDB.php in TestLink through 1.9.16 allows remote attackers to conduct injection attacks by leveraging control over DB LOGIN NAMES data during installation to provide a long, crafted value.",
+      "cwe_id": "CWE-94",
+      "cwe_name": "Improper Control of Generation of Code ('Code Injection')",
+      "weakness_abstraction": "Base",
+      "description": "The product constructs all or part of a code segment using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the syntax or behavior of the intended code segment."
+    }
+  ],
+  "count": 36
+}

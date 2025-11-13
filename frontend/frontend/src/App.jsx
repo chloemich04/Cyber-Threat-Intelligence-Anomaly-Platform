@@ -224,7 +224,7 @@ export default function App(){
         </aside>
       </main>
 
-            <footer>© 2025 CTI Dashboard — Skeleton</footer>
+            <footer>© 2025 CTI Dashboard</footer>
           </>
         );
     }

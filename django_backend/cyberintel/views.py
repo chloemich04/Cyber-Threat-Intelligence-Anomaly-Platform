@@ -14,7 +14,7 @@ from django.db import connection
 from django.db.models import Count, Sum
 from django.core.cache import cache
 
-from .models import ThreatIndicator, CveCountsByRegion
+from .models import ThreatIndicator, CveCountsByRegion, NvdDataLimited, CweSoftwareLimited
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -65,6 +65,26 @@ def forecast_threats_api(request):
     from .threat_forecast import forecast_threats
     
     try:
+        # Simple per-IP rate limiter (configurable via settings)
+        rate_cfg = getattr(settings, 'FORECAST_RATE_LIMIT', None)
+        if rate_cfg is None:
+            # default: 1 request per 5 minutes per IP
+            rate_cfg = {'max_requests': 1, 'window_seconds': 300}
+
+        # Identify client IP (respect X-Forwarded-For if present)
+        xff = request.META.get('HTTP_X_FORWARDED_FOR')
+        if xff:
+            client_ip = xff.split(',')[0].strip()
+        else:
+            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+
+        rl_key = f"forecast_rl:{client_ip}"
+        current = cache.get(rl_key, 0)
+        if current >= rate_cfg.get('max_requests', 1):
+            retry_after = cache.ttl(rl_key) if hasattr(cache, 'ttl') else rate_cfg.get('window_seconds')
+            return Response({'error': 'Rate limit exceeded', 'retry_after_seconds': retry_after}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        else:
+            cache.set(rl_key, current + 1, timeout=rate_cfg.get('window_seconds', 300))
         # Parse request parameters
         weeks = request.data.get('weeks', 4)
         batch_size = request.data.get('batch_size', 6)
@@ -84,13 +104,28 @@ def forecast_threats_api(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Load REAL CVE/CWE data from database
-        nvd_records = list(
-            NvdDataEnriched.objects.only(
-                'id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description'
-            )[:100]  # Get first 100 CVEs 
-            .values('id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description')
-        )
+        # Load REAL CVE/CWE data from a curated forecast feed if available, otherwise query DB
+        feed_file = os.path.join(settings.BASE_DIR, 'forecast_feed.json')
+        nvd_records = []
+        if os.path.exists(feed_file):
+            try:
+                with open(feed_file, 'r', encoding='utf-8') as f:
+                    feed = json.load(f)
+                    nvd_records = feed.get('cve_rows', [])
+                # ensure it's a list of dicts
+                if not isinstance(nvd_records, list):
+                    nvd_records = []
+            except Exception as e:
+                print(f"Warning: could not load forecast_feed.json: {e}")
+
+        if not nvd_records:
+            # Query NVD database for CVEs - get a sample without expensive sorting
+            # Use only() to fetch only needed fields for better performance
+            nvd_records = list(
+                NvdDataLimited.objects.only(
+                    'id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description'
+                )[:100].values('id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description')
+            )
         
         if not nvd_records:
             return Response(
@@ -112,7 +147,7 @@ def forecast_threats_api(request):
         if cve_cwe_ids:
             cwe_lookup = {
                 cwe.cwe_id: cwe 
-                for cwe in CweSoftwareDevelopment.objects.filter(cwe_id__in=cve_cwe_ids)
+                for cwe in CweSoftwareLimited.objects.filter(cwe_id__in=cve_cwe_ids)
             }
         else:
             cwe_lookup = {}
@@ -208,13 +243,21 @@ def forecast_threats_api(request):
         df = pd.DataFrame(threat_data)
         threat_count = len(df)
         
-        # Run forecast
+        # Support dry-run estimate mode (no LLM call)
+        dry_run = bool(request.data.get('dry_run', False))
+
+        # Run forecast (forecast_threats supports dry_run and will return estimated info)
         forecast_result = forecast_threats(
             df=df,
             date_column='timestamp',
             batch_size=batch_size,
-            forecast_weeks=weeks
+            forecast_weeks=weeks,
+            dry_run=dry_run
         )
+
+        # If dry-run, return the estimate directly
+        if dry_run:
+            return Response({'dry_run': True, 'estimate': forecast_result.get('estimated', {}), 'feature_records_count': forecast_result.get('feature_records_count', 0)}, status=status.HTTP_200_OK)
         
         # Add request metadata
         forecast_result['request'] = {
@@ -224,14 +267,36 @@ def forecast_threats_api(request):
             'countries': countries,
             'threat_records_analyzed': threat_count
         }
+
+        # Add threat type distribution computed from the input threat_data (so UI can show both input-identified types and model predictions)
+        try:
+            threat_type_counts = {}
+            for record in threat_data:
+                threat_type = record.get('threat_type', 'Other')
+                threat_type_counts[threat_type] = threat_type_counts.get(threat_type, 0) + 1
+            threat_types = [
+                {'threat_type': tt, 'count': count}
+                for tt, count in sorted(threat_type_counts.items(), key=lambda x: x[1], reverse=True)
+            ]
+            forecast_result['threat_types'] = threat_types
+            forecast_result['total_threats'] = len(threat_data)
+        except Exception:
+            # non-critical
+            pass
         
         # Add timestamp
         forecast_result['generated_at'] = datetime.now().isoformat()
         
-        # Save to cache file for frontend to fetch
+        # Save to cache file for frontend to fetch and populate in-memory cache (TTL configurable)
         try:
             with open(FORECAST_CACHE_FILE, 'w') as f:
                 json.dump(forecast_result, f, indent=2)
+            ttl = getattr(settings, 'FORECAST_CACHE_TTL_SECONDS', 3600)
+            try:
+                cache.set('latest_forecast', forecast_result, timeout=ttl)
+            except Exception:
+                # best-effort: file written but cache could not be set
+                pass
         except Exception as save_error:
             # Non-critical error, just log it
             print(f"Warning: Could not save forecast cache: {save_error}")
@@ -307,7 +372,16 @@ def get_latest_forecast(request):
     Returns: Latest forecast JSON if available, or 404 if no forecast exists yet
     """
     try:
-        # Check if cache file exists
+        # Try in-memory cache first
+        ttl = getattr(settings, 'FORECAST_CACHE_TTL_SECONDS', 3600)
+        cached = cache.get('latest_forecast')
+        if cached:
+            # add a note that this came from cache
+            cached = dict(cached)
+            cached['cache_info'] = {'source': 'memory', 'ttl_seconds': ttl}
+            return Response(cached, status=status.HTTP_200_OK)
+
+        # Fallback: check if cache file exists
         if not os.path.exists(FORECAST_CACHE_FILE):
             return Response(
                 {
@@ -316,18 +390,25 @@ def get_latest_forecast(request):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        # Load cached forecast
+
+        # Load cached forecast from disk
         with open(FORECAST_CACHE_FILE, 'r') as f:
             forecast_data = json.load(f)
-        
+
         # Add file metadata
         file_stats = os.stat(FORECAST_CACHE_FILE)
         forecast_data['cache_info'] = {
             'file_modified': datetime.fromtimestamp(file_stats.st_mtime).isoformat(),
-            'file_size_bytes': file_stats.st_size
+            'file_size_bytes': file_stats.st_size,
+            'source': 'disk'
         }
-        
+
+        # Populate in-memory cache for faster subsequent calls
+        try:
+            cache.set('latest_forecast', forecast_data, timeout=ttl)
+        except Exception:
+            pass
+
         return Response(forecast_data, status=status.HTTP_200_OK)
         
     except Exception as e:

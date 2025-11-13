@@ -31,23 +31,11 @@ const Navigation = () => {
             onClick={() => handleNavigation('threat-intelligence')} 
             className={`nav-link ${currentPage === 'threat-intelligence' ? 'active' : ''}`}
           >
-            AI Threat Intelligence
+            AI Predictions
           </button>
           <button 
             onClick={() => handleNavigation('analytics')} 
             className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
-          >
-            Analytics
-          </button>
-          <button 
-            onClick={() => handleNavigation('reports')} 
-            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
-          >
-            Predictions
-          </button>
-          <button 
-            onClick={() => handleNavigation('about')} 
-            className={`nav-link ${currentPage === 'about' ? 'active' : ''}`}
           >
             About Us
           </button>
@@ -82,23 +70,11 @@ const Navigation = () => {
             onClick={() => handleNavigation('threat-intelligence')} 
             className={`nav-link ${currentPage === 'threat-intelligence' ? 'active' : ''}`}
           >
-            AI Threat Intelligence
+            AI Predictions
           </button>
           <button 
             onClick={() => handleNavigation('analytics')} 
             className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
-          >
-            Analytics
-          </button>
-          <button 
-            onClick={() => handleNavigation('reports')} 
-            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
-          >
-            Predictions
-          </button>
-          <button 
-            onClick={() => handleNavigation('about')} 
-            className={`nav-link ${currentPage === 'about' ? 'active' : ''}`}
           >
             About Us
           </button>

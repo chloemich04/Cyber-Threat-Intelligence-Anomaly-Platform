@@ -9,7 +9,7 @@ import pandas as pd
 import json
 import os
 from datetime import datetime, timedelta
-from cyberintel.models import NvdDataEnriched, CweSoftwareDevelopment
+from cyberintel.models import NvdDataLimited, CweSoftwareLimited
 from cyberintel.threat_forecast import forecast_threats, save_forecast_results
 import random
 
@@ -105,17 +105,28 @@ class Command(BaseCommand):
         self.stdout.write(f"  Analysis Scope: US ONLY")
         self.stdout.write(f"  Dry Run: {dry_run}")
         
-        # Step 1: Load REAL CVE/CWE data from database
-        self.stdout.write(f"\n{self.style.WARNING('Step 1:')} Loading CVE and CWE data from database...")
-        
-        # Query NVD database for CVEs - get a sample without expensive sorting
-        # Use only() to fetch only needed fields for better performance
-        nvd_records = list(
-            NvdDataEnriched.objects.only(
-                'id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description'
-            )[:100]  # Get first 100 CVEs (much faster than ordering)
-            .values('id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description')
-        )
+        # Step 1: Load REAL CVE/CWE data from a curated forecast feed if available, otherwise query DB
+        self.stdout.write(f"\n{self.style.WARNING('Step 1:')} Loading CVE and CWE data (using forecast feed if available)...")
+
+        feed_file = os.path.join(settings.BASE_DIR, 'forecast_feed.json')
+        nvd_records = []
+        if os.path.exists(feed_file):
+            try:
+                with open(feed_file, 'r', encoding='utf-8') as f:
+                    feed = json.load(f)
+                    nvd_records = feed.get('cve_rows', [])
+                self.stdout.write(f"  → Loaded {len(nvd_records)} curated CVE rows from forecast_feed.json")
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f"  → Failed to load forecast_feed.json: {e}. Falling back to DB query."))
+
+        if not nvd_records:
+            # Query NVD database for CVEs - use the lightweight proxy model
+            # and fetch only the fields we need for forecasting.
+            nvd_records = list(
+                NvdDataLimited.objects.only(
+                    'id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description'
+                )[:100].values('id', 'published', 'vulnstatus', 'value', 'cwe_id', 'description')
+            )
         
         if not nvd_records:
             self.stdout.write(self.style.ERROR("=" * 70))
@@ -139,7 +150,7 @@ class Command(BaseCommand):
         if cve_cwe_ids:
             cwe_lookup = {
                 cwe.cwe_id: cwe 
-                for cwe in CweSoftwareDevelopment.objects.filter(cwe_id__in=cve_cwe_ids)
+                for cwe in CweSoftwareLimited.objects.filter(cwe_id__in=cve_cwe_ids)
             }
             self.stdout.write(f"  → Loaded {len(cwe_lookup)} CWE weakness records (matched to CVEs)")
         else:
@@ -255,8 +266,23 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("  → Using 100% REAL CVE/CWE data from your database"))
         
         if dry_run:
-            self.stdout.write(self.style.WARNING("\n[DRY RUN] Stopping before API call"))
-            self.stdout.write(f"Would analyze {history_weeks} weeks of US data")
+            self.stdout.write(self.style.WARNING("\n[DRY RUN] Estimating prompt tokens and cost (no LLM call)"))
+            try:
+                forecast_result = forecast_threats(
+                    df=df,
+                    date_column='timestamp',
+                    weeks_of_history=history_weeks,
+                    forecast_weeks=weeks,
+                    dry_run=True
+                )
+                est = forecast_result.get('estimated', {})
+                self.stdout.write(f"  → Feature records prepared: {forecast_result.get('feature_records_count')}")
+                self.stdout.write(f"  → Estimated input tokens: {est.get('estimated_input_tokens')}")
+                self.stdout.write(f"  → Estimated output tokens: {est.get('estimated_output_tokens')}")
+                self.stdout.write(f"  → Estimated total tokens: {est.get('estimated_total_tokens')}")
+                self.stdout.write(f"  → Estimated cost (USD): ${est.get('estimated_cost_usd')}")
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f"Dry-run estimate failed: {e}"))
             return
         
         # Step 2: Run US forecast
@@ -280,6 +306,16 @@ class Command(BaseCommand):
         
         predictions = forecast_result.get('predictions', [])
         self.stdout.write(f"  → Generated {len(predictions)} weekly predictions (US ONLY)")
+
+        # Surface new LLM summary fields if present
+        predicted_types = forecast_result.get('predicted_threat_types', [])
+        monthly_attacks = forecast_result.get('monthly_predicted_attacks', None)
+        if predicted_types:
+            self.stdout.write(f"  → Model predicted {len(predicted_types)} threat type entries")
+            for pt in predicted_types[:5]:
+                self.stdout.write(f"    - {pt.get('threat_type')}: {pt.get('probability')}")
+        if monthly_attacks is not None:
+            self.stdout.write(f"  → Monthly predicted attacks (next ~4 weeks): {monthly_attacks}")
         
         if predictions:
             self.stdout.write("\n  Predictions by Week:")
@@ -335,6 +371,13 @@ class Command(BaseCommand):
             with open(FORECAST_CACHE_FILE, 'w') as f:
                 json.dump(forecast_result, f, indent=2)
             self.stdout.write(f"  → Saved to cache: {FORECAST_CACHE_FILE}")
+            # Also populate Django in-memory cache if available
+            try:
+                from django.core.cache import cache
+                ttl = getattr(settings, 'FORECAST_CACHE_TTL_SECONDS', 3600)
+                cache.set('latest_forecast', forecast_result, timeout=ttl)
+            except Exception:
+                pass
         except Exception as cache_error:
             self.stdout.write(self.style.WARNING(f"  → Cache save failed: {cache_error}"))
         

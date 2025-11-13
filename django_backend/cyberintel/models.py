@@ -1,6 +1,5 @@
 from django.db import models
 
-
 # Create your models here.
 
 # Test model for cyber threat intelligence
@@ -43,3 +42,31 @@ class CveCountsByRegionEpss(models.Model):
     class Meta:
         #managed = False
         db_table = 'cve_counts_by_region_epss'
+
+
+class NvdDataLimited(models.Model):
+    # The underlying table has an `id` column; declare it as primary key here
+    # to satisfy Django model checks. This is an unmanaged proxy with a small
+    # subset of columns used by forecasting code.
+    id = models.TextField(primary_key=True)
+    published = models.TextField(blank=True, null=True)
+    vulnstatus = models.TextField(db_column='vulnStatus', blank=True, null=True)
+    value = models.TextField(blank=True, null=True)
+    cwe_id = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'nvd_data_enriched'
+
+
+# Lightweight proxy for the CWE table with only the fields we need for enrichment.
+class CweSoftwareLimited(models.Model):
+    # Use CWE identifier as the primary key for this lightweight proxy model
+    cwe_id = models.TextField(primary_key=True)
+    name = models.TextField(blank=True, null=True)
+    weakness_abstraction = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'cwe_software_development'
