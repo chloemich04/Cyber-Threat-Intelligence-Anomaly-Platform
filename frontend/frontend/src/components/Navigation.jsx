@@ -34,8 +34,8 @@ const Navigation = () => {
             AI Predictions
           </button>
           <button 
-            onClick={() => handleNavigation('analytics')} 
-            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
+            onClick={() => handleNavigation('about')} 
+            className={`nav-link ${currentPage === 'about' ? 'active' : ''}`}
           >
             About Us
           </button>
@@ -73,8 +73,8 @@ const Navigation = () => {
             AI Predictions
           </button>
           <button 
-            onClick={() => handleNavigation('analytics')} 
-            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
+            onClick={() => handleNavigation('about')} 
+            className={`nav-link ${currentPage === 'about' ? 'active' : ''}`}
           >
             About Us
           </button>

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import InfoModal from './InfoModal';
 
 const ForecastDisplay = () => {
   const [forecastData, setForecastData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [showCIInfo, setShowCIInfo] = useState(false);
+  const [showSpikeInfo, setShowSpikeInfo] = useState(false);
+  const [showConfidenceInfo, setShowConfidenceInfo] = useState(false);
 
   // Fetch latest forecast data when component mounts
   useEffect(() => {
@@ -121,6 +125,53 @@ const ForecastDisplay = () => {
         
       </div>
 
+      <InfoModal open={showCIInfo} onClose={() => setShowCIInfo(false)} title="About the Confidence Interval">
+        <p>
+          The confidence interval shows the model's uncertainty around its predictions. It represents a range
+          where the true value is expected to lie with a given level of confidence (for example, 90% or 95%).
+        </p>
+        <ul style={{ marginTop: 8 }}>
+          <li><strong>What it means:</strong> a wider interval means more uncertainty; a narrow interval means the model is more certain.</li>
+          <li><strong>How to use it:</strong> treat spikes that fall outside the upper bound with higher priority for investigation.</li>
+          <li><strong>Why it changes:</strong> intervals widen when historical data is sparse or noisy, when recent trends are volatile, or when key signals conflict.</li>
+        </ul>
+        <p style={{ marginTop: 8 }}>
+          Use the confidence interval alongside the point prediction and key signals — it helps you understand how much
+          trust to place in the forecast and whether you should prioritize human validation or automated alerts.
+        </p>
+      </InfoModal>
+
+      <InfoModal open={showSpikeInfo} onClose={() => setShowSpikeInfo(false)} title="About Spike Risk">
+        <p>
+          Spike Risk is the model's estimate of how likely the expected count for a week will be significantly higher than
+          baseline. It helps identify weeks that may require immediate investigation or heightened monitoring.
+        </p>
+        <ul style={{ marginTop: 8 }}>
+          <li><strong>What it means:</strong> a higher percentage indicates a greater chance of a sudden increase relative to typical levels.</li>
+          <li><strong>Thresholds:</strong> we surface spike risk as categories (e.g., low/medium/high) based on probability cutoffs — treat high-risk weeks as higher priority.</li>
+          <li><strong>How it's used:</strong> combine spike risk with the confidence interval and key signals to decide whether to trigger alerts or assign human review.</li>
+        </ul>
+        <p style={{ marginTop: 8 }}>
+          Spike Risk is a probabilistic signal — it is not a definitive indicator. Use it to prioritize investigations and to tune automated responses conservatively.
+        </p>
+      </InfoModal>
+
+      <InfoModal open={showConfidenceInfo} onClose={() => setShowConfidenceInfo(false)} title="About Confidence">
+        <p>
+          The confidence percentage reports how certain the model is about its point prediction for that week. A higher
+          percentage indicates the model assigns more weight to the point estimate, while a lower percentage indicates more
+          uncertainty and that you should weigh the confidence interval and key signals when deciding on automated actions.
+        </p>
+        <ul style={{ marginTop: 8 }}>
+          <li><strong>What it means:</strong> higher percent = more model certainty about the expected count.</li>
+          <li><strong>How to use it:</strong> prefer investigating high-impact weeks with both high spike risk and high confidence.</li>
+          <li><strong>Limitations:</strong> confidence is model-derived and depends on data quality; always corroborate with telemetry.</li>
+        </ul>
+        <p style={{ marginTop: 8 }}>
+          Use the confidence value alongside the confidence interval and key signals to prioritize alerts and investigations.
+        </p>
+      </InfoModal>
+
     
       {/* Predictions by Country */}
       {countryCodes.map(countryCode => {
@@ -135,10 +186,70 @@ const ForecastDisplay = () => {
                 <tr>
                   <th>Week Starting</th>
                   <th>Expected Threats</th>
-                  <th>Confidence Interval</th>
-                  <th>Spike Risk</th>
-                  <th>Confidence</th>
-                  <th>Key Signals</th>
+                  <th>
+                    Confidence Interval
+                    <button
+                      type="button"
+                      title="Confidence interval explanation"
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 12,
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                      }}
+                      aria-label="Confidence interval tooltip"
+                      aria-expanded={showCIInfo}
+                      onClick={() => setShowCIInfo(true)}
+                    >
+                      ℹ️
+                    </button>
+                  </th>
+                  <th>
+                    Spike Risk
+                    <button
+                      type="button"
+                      title="Spike risk explanation"
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 12,
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                      }}
+                      aria-label="Spike risk tooltip"
+                      aria-expanded={showSpikeInfo}
+                      onClick={() => setShowSpikeInfo(true)}
+                    >
+                      ℹ️
+                    </button>
+                  </th>
+                  <th>
+                    Confidence
+                    <button
+                      type="button"
+                      title="Confidence explanation"
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 12,
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                      }}
+                      aria-label="Confidence info"
+                      aria-expanded={showConfidenceInfo}
+                      onClick={() => setShowConfidenceInfo(true)}
+                    >
+                      ℹ️
+                    </button>
+                  </th>
+                  
                 </tr>
               </thead>
               <tbody>
@@ -160,14 +271,10 @@ const ForecastDisplay = () => {
                         {(pred.spike_probability * 100).toFixed(0)}%
                       </span>
                     </td>
-                    <td>{(pred.confidence * 100).toFixed(0)}%</td>
-                    <td className="forecast-signals">
-                      {pred.top_signals?.slice(0, 2).map((sig, i) => (
-                        <span key={i} className="chip" title={`Score: ${sig.score?.toFixed(2)}`}>
-                          {sig.signal_type}: {sig.id}
-                        </span>
-                      ))}
+                    <td>
+                      {pred.confidence != null ? `${(pred.confidence * 100).toFixed(0)}%` : 'N/A'}
                     </td>
+                    
                   </tr>
                 ))}
               </tbody>

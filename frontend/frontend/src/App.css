@@ -349,14 +349,17 @@ main{
 .chart-content {
   flex: 1;
   position: relative;
-  overflow: hidden;
+  /* Allow chart elements (legends/labels) to overflow if they need extra space */
+  overflow: visible;
+  padding-bottom: 12px; /* give room for legends/labels */
 }
 
 /* Chart container improvements */
 .chart-container {
   position: relative;
   border-radius: 8px;
-  overflow: hidden;
+  /* Legends and outside labels can extend beyond the svg bounds; allow visibility */
+  overflow: visible;
 }
 
 /* Enhanced chart box styling */

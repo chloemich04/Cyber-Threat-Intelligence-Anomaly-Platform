@@ -8,11 +8,15 @@ const PDFExport = ({ forecastData }) => {
   const [exportOptions, setExportOptions] = useState({
     includeText: true,
     includeForecastTable: true,
-    includeLossBySector: false,
-    includeThreatSeverity: false,
-    includeTopCVEs: false,
-    includeThreatTrends: false,
-    includeGeographic: false,
+    includePredictedThreatTypes: true,
+    includeKeySignals: true,
+    includeRiskMatrix: true,
+    includePredictedThreatTypesInfo: false,
+    includeKeySignalsInfo: false,
+    includeRiskMatrixInfo: false,
+    includeCIInfo: false,
+    includeConfidenceInfo: false,
+    includeSpikeInfo: false,
     includeMetrics: true,
   });
 
@@ -33,7 +37,7 @@ const PDFExport = ({ forecastData }) => {
     try {
       const canvas = await html2canvas(element, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: null, // keep transparency so it blends with dark PDF background
         logging: false,
         useCORS: true,
       });
@@ -285,28 +289,95 @@ const PDFExport = ({ forecastData }) => {
 
           yPosition += 8;
         });
+        // Optionally include Forecast Display info modals (Confidence Interval / Spike Risk)
+        if (exportOptions.includeCIInfo) {
+          yPosition += 4;
+          checkPageBreak(30);
+          // CI info box
+          const ciText = `About the Confidence Interval: The confidence interval shows the model's uncertainty around its predictions. It represents a range where the true value is expected to lie with a given level of confidence. A wider interval means more uncertainty; a narrow interval means the model is more certain.`;
+          pdf.setFillColor(...colors.panel);
+          pdf.setDrawColor(...colors.accent);
+          pdf.setLineWidth(0.5);
+          const ciLines = pdf.splitTextToSize(ciText, contentWidth - 6);
+          const ciBoxHeight = (ciLines.length * 6) + 8;
+          pdf.roundedRect(margin, yPosition - 2, contentWidth, ciBoxHeight, 2, 2, 'FD');
+          pdf.setFontSize(9);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'italic');
+          ciLines.forEach((line, idx) => {
+            pdf.text(line, margin + 3, yPosition + 3 + (idx * 6));
+          });
+          yPosition += ciBoxHeight + 6;
+        }
+
+        if (exportOptions.includeSpikeInfo) {
+          yPosition += 4;
+          checkPageBreak(30);
+          const spikeText = `About Spike Risk: Spike Risk is the model's estimate of how likely the expected count for a week will be significantly higher than baseline. Use spike risk with confidence intervals and key signals to prioritize investigations.`;
+          pdf.setFillColor(...colors.panel);
+          pdf.setDrawColor(...colors.accent);
+          pdf.setLineWidth(0.5);
+          const spikeLines = pdf.splitTextToSize(spikeText, contentWidth - 6);
+          const spikeBoxHeight = (spikeLines.length * 6) + 8;
+          pdf.roundedRect(margin, yPosition - 2, contentWidth, spikeBoxHeight, 2, 2, 'FD');
+          pdf.setFontSize(9);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'italic');
+          spikeLines.forEach((line, idx) => {
+            pdf.text(line, margin + 3, yPosition + 3 + (idx * 6));
+          });
+          yPosition += spikeBoxHeight + 6;
+        }
+
+        // Optionally include Confidence modal text
+        if (exportOptions.includeConfidenceInfo) {
+          yPosition += 4;
+          checkPageBreak(30);
+          const confText = `About Confidence: The confidence percentage reports how certain the model is about its point prediction for that week. A higher percentage indicates the model assigns more weight to the point estimate, while a lower percentage indicates more uncertainty. Use confidence alongside the confidence interval and key signals to prioritize investigations and automated actions.`;
+          pdf.setFillColor(...colors.panel);
+          pdf.setDrawColor(...colors.accent);
+          pdf.setLineWidth(0.5);
+          const confLines = pdf.splitTextToSize(confText, contentWidth - 6);
+          const confBoxHeight = (confLines.length * 6) + 8;
+          pdf.roundedRect(margin, yPosition - 2, contentWidth, confBoxHeight, 2, 2, 'FD');
+          pdf.setFontSize(9);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'italic');
+          confLines.forEach((line, idx) => {
+            pdf.text(line, margin + 3, yPosition + 3 + (idx * 6));
+          });
+          yPosition += confBoxHeight + 6;
+        }
       }
 
-      // Include Metrics
+        // Include Forecast Accuracy & Performance metrics (show the same KPIs displayed on the page)
       if (exportOptions.includeMetrics) {
         checkPageBreak(50);
-        
+
         // Section header with background
         pdf.setFillColor(...colors.panel);
         pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
-        
+
         pdf.setFontSize(16);
         pdf.setTextColor(...colors.accent);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('Performance Metrics', margin + 3, yPosition + 5);
+        pdf.text('Forecast Accuracy & Performance', margin + 3, yPosition + 5);
         yPosition += 16;
 
-        // Metrics in cards
+        // KPIs in cards (Average Confidence, Average Spike Probability, CVEs Analyzed, Monthly Predicted Attacks)
+        const avgConfidence = forecastData?.predictions && forecastData.predictions.length > 0
+          ? `${Math.round((forecastData.predictions.reduce((sum, p) => sum + (p.confidence || 0), 0) / forecastData.predictions.length) * 100)}%`
+          : '—';
+
+        const avgSpike = forecastData?.predictions && forecastData.predictions.length > 0
+          ? `${Math.round((forecastData.predictions.reduce((sum, p) => sum + (p.spike_probability || 0), 0) / forecastData.predictions.length) * 100)}%`
+          : '—';
+
         const metrics = [
-          { label: 'CVEs Analyzed', value: forecastData?.metadata?.total_cves_analyzed || '100'},
-          { label: 'Threat Events', value: forecastData?.metadata?.total_events_analyzed || '~450'},
-          { label: 'Forecast Horizon', value: `${forecastData?.forecast_horizon_weeks || 4} weeks`},
-          { label: 'Analysis Scope', value: 'United States'},
+          { label: 'Average Confidence', value: avgConfidence },
+          { label: 'Average Spike Probability', value: avgSpike },
+          { label: 'CVEs Analyzed', value: forecastData?.total_threats || forecastData?.metadata?.total_cves_analyzed || '—' },
+          { label: 'Monthly Predicted Attacks', value: typeof forecastData?.monthly_predicted_attacks === 'number' ? forecastData.monthly_predicted_attacks.toLocaleString() : '—' },
         ];
 
         metrics.forEach((metric, idx) => {
@@ -314,19 +385,19 @@ const PDFExport = ({ forecastData }) => {
             yPosition += 22;
             checkPageBreak(22);
           }
-          
+
           const xStart = margin + (idx % 2) * (contentWidth / 2 + 5);
           const cardWidth = (contentWidth / 2) - 5;
-          
+
           // Metric card with gradient background
           pdf.setFillColor(17, 24, 39);
           pdf.roundedRect(xStart, yPosition, cardWidth, 18, 2, 2, 'F');
-          
+
           // Card border
           pdf.setDrawColor(...colors.border);
           pdf.setLineWidth(0.3);
           pdf.roundedRect(xStart, yPosition, cardWidth, 18, 2, 2, 'D');
-          
+
           // Label
           pdf.setFontSize(10);
           pdf.setTextColor(...colors.muted);
@@ -334,7 +405,7 @@ const PDFExport = ({ forecastData }) => {
           if (metric.label && typeof metric.label === 'string') {
             pdf.text(metric.label, xStart + 3, yPosition + 6);
           }
-          
+
           // Value
           pdf.setFontSize(14);
           pdf.setTextColor(...colors.accent);
@@ -343,17 +414,34 @@ const PDFExport = ({ forecastData }) => {
             pdf.text(metric.value, xStart + 3, yPosition + 14);
           }
         });
-        
+
         yPosition += 24;
       }
 
       // Capture and include selected charts in 2-column layout
+      // Map chart ids used on the Threat Intelligence page to export options and titles
       const chartConfigs = [
-        { id: 'loss-by-sector', option: 'includeLossBySector', title: 'Loss by Sector' },
-        { id: 'threat-severity', option: 'includeThreatSeverity', title: 'Predicted Threat Severity' },
-        { id: 'top-cves', option: 'includeTopCVEs', title: 'Top Predicted CVE Threats' },
-        { id: 'threat-trends', option: 'includeThreatTrends', title: 'Threat Trend Predictions' },
-        { id: 'geographic', option: 'includeGeographic', title: 'Geographic Threat Forecast' },
+        {
+          id: 'predicted-donut',
+          option: 'includePredictedThreatTypes',
+          title: 'Predicted Threat Types',
+          infoOption: 'includePredictedThreatTypesInfo',
+          infoText: `This chart shows the model's breakdown of predicted threat types for the forecast horizon. It summarizes the most likely categories (for example, ransomware, phishing, exploitation) based on the signals in the input feed.`,
+        },
+        {
+          id: 'key-signals-bar-chart',
+          option: 'includeKeySignals',
+          title: 'Key Signals',
+          infoOption: 'includeKeySignalsInfo',
+          infoText: `Key Signals are summarized, human-readable indicators (e.g., recent spikes in exploit attempts, notable CVEs, or trending malware families) that the model used to inform its forecasts.`,
+        },
+        {
+          id: 'risk-matrix',
+          option: 'includeRiskMatrix',
+          title: 'Risk Matrix — Confidence vs Impact',
+          infoOption: 'includeRiskMatrixInfo',
+          infoText: `The risk matrix plots each forecasted week by expected impact (x-axis) and model confidence (y-axis). Points in the top-right quadrant represent high-impact, high-confidence items that are strong candidates for prioritization.`,
+        },
       ];
 
       const selectedCharts = chartConfigs.filter(chart => exportOptions[chart.option]);
@@ -384,7 +472,7 @@ const PDFExport = ({ forecastData }) => {
         
         // Left chart
         const leftImage = await captureChart(leftChart.id);
-        
+
         // Chart title with background
         pdf.setFillColor(...colors.panel);
         pdf.roundedRect(margin, yPosition, chartWidth, 8, 1, 1, 'F');
@@ -392,29 +480,55 @@ const PDFExport = ({ forecastData }) => {
         pdf.setTextColor(...colors.text);
         pdf.setFont('helvetica', 'bold');
         pdf.text(leftChart.title, margin + 2, yPosition + 5);
-        
-        if (leftImage) {
-          pdf.addImage(leftImage, 'PNG', margin, yPosition + 9, chartWidth, chartHeight);
-        } else {
+
+        // Reserve Y offset for content inside left column
+        let leftYOffset = yPosition + 9;
+        let leftContentHeight = 0;
+
+        // If user requested the chart's info modal content, render it above the image
+        if (leftChart.infoOption && exportOptions[leftChart.infoOption]) {
+          const infoLines = pdf.splitTextToSize(leftChart.infoText, chartWidth - 6);
+          const infoBoxHeight = (infoLines.length * 6) + 8;
+          checkPageBreak(infoBoxHeight + 10);
           pdf.setFillColor(...colors.panel);
-          pdf.roundedRect(margin, yPosition + 9, chartWidth, chartHeight, 2, 2, 'F');
-          pdf.setDrawColor(...colors.border);
+          pdf.setDrawColor(...colors.accent);
           pdf.setLineWidth(0.5);
-          pdf.setLineDash([2, 2]);
-          pdf.roundedRect(margin, yPosition + 9, chartWidth, chartHeight, 2, 2, 'D');
-          pdf.setLineDash([]);
-          
+          pdf.roundedRect(margin, leftYOffset, chartWidth, infoBoxHeight, 2, 2, 'FD');
           pdf.setFontSize(9);
           pdf.setTextColor(...colors.muted);
           pdf.setFont('helvetica', 'italic');
-          pdf.text('Chart not available', margin + (chartWidth / 2), yPosition + (chartHeight / 2), { align: 'center' });
+          infoLines.forEach((line, idx) => {
+            pdf.text(line, margin + 3, leftYOffset + 4 + (idx * 6));
+          });
+          leftYOffset += infoBoxHeight + 4;
+          leftContentHeight += infoBoxHeight + 4;
+        }
+
+        if (leftImage) {
+          pdf.addImage(leftImage, 'PNG', margin, leftYOffset, chartWidth, chartHeight);
+          leftContentHeight += chartHeight;
+        } else {
+          pdf.setFillColor(...colors.panel);
+          pdf.roundedRect(margin, leftYOffset, chartWidth, chartHeight, 2, 2, 'F');
+          pdf.setDrawColor(...colors.border);
+          pdf.setLineWidth(0.5);
+          pdf.setLineDash([2, 2]);
+          pdf.roundedRect(margin, leftYOffset, chartWidth, chartHeight, 2, 2, 'D');
+          pdf.setLineDash([]);
+
+          pdf.setFontSize(9);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'italic');
+          pdf.text('Chart not available', margin + (chartWidth / 2), leftYOffset + (chartHeight / 2), { align: 'center' });
+          leftContentHeight += chartHeight;
         }
         
         // Right chart (if exists)
+        let rightContentHeight = 0;
         if (rightChart) {
           const rightImage = await captureChart(rightChart.id);
           const rightX = margin + chartWidth + 10;
-          
+
           // Chart title with background
           pdf.setFillColor(...colors.panel);
           pdf.roundedRect(rightX, yPosition, chartWidth, 8, 1, 1, 'F');
@@ -422,26 +536,51 @@ const PDFExport = ({ forecastData }) => {
           pdf.setTextColor(...colors.text);
           pdf.setFont('helvetica', 'bold');
           pdf.text(rightChart.title, rightX + 2, yPosition + 5);
-          
-          if (rightImage) {
-            pdf.addImage(rightImage, 'PNG', rightX, yPosition + 9, chartWidth, chartHeight);
-          } else {
+
+          // Reserve Y offset for right column
+          let rightYOffset = yPosition + 9;
+
+          if (rightChart.infoOption && exportOptions[rightChart.infoOption]) {
+            const rInfoLines = pdf.splitTextToSize(rightChart.infoText, chartWidth - 6);
+            const rInfoBoxHeight = (rInfoLines.length * 6) + 8;
+            checkPageBreak(rInfoBoxHeight + 10);
             pdf.setFillColor(...colors.panel);
-            pdf.roundedRect(rightX, yPosition + 9, chartWidth, chartHeight, 2, 2, 'F');
-            pdf.setDrawColor(...colors.border);
+            pdf.setDrawColor(...colors.accent);
             pdf.setLineWidth(0.5);
-            pdf.setLineDash([2, 2]);
-            pdf.roundedRect(rightX, yPosition + 9, chartWidth, chartHeight, 2, 2, 'D');
-            pdf.setLineDash([]);
-            
+            pdf.roundedRect(rightX, rightYOffset, chartWidth, rInfoBoxHeight, 2, 2, 'FD');
             pdf.setFontSize(9);
             pdf.setTextColor(...colors.muted);
             pdf.setFont('helvetica', 'italic');
-            pdf.text('Chart not available', rightX + (chartWidth / 2), yPosition + (chartHeight / 2), { align: 'center' });
+            rInfoLines.forEach((line, idx) => {
+              pdf.text(line, rightX + 3, rightYOffset + 4 + (idx * 6));
+            });
+            rightYOffset += rInfoBoxHeight + 4;
+            rightContentHeight += rInfoBoxHeight + 4;
+          }
+
+          if (rightImage) {
+            pdf.addImage(rightImage, 'PNG', rightX, rightYOffset, chartWidth, chartHeight);
+            rightContentHeight += chartHeight;
+          } else {
+            pdf.setFillColor(...colors.panel);
+            pdf.roundedRect(rightX, rightYOffset, chartWidth, chartHeight, 2, 2, 'F');
+            pdf.setDrawColor(...colors.border);
+            pdf.setLineWidth(0.5);
+            pdf.setLineDash([2, 2]);
+            pdf.roundedRect(rightX, rightYOffset, chartWidth, chartHeight, 2, 2, 'D');
+            pdf.setLineDash([]);
+
+            pdf.setFontSize(9);
+            pdf.setTextColor(...colors.muted);
+            pdf.setFont('helvetica', 'italic');
+            pdf.text('Chart not available', rightX + (chartWidth / 2), rightYOffset + (chartHeight / 2), { align: 'center' });
+            rightContentHeight += chartHeight;
           }
         }
-        
-        yPosition += chartHeight + 20;
+
+        // Advance yPosition by the taller column content plus padding
+        const columnMax = Math.max(leftContentHeight, rightContentHeight);
+        yPosition += columnMax + 20;
       }
 
       // Footer on last page
@@ -491,98 +630,145 @@ const PDFExport = ({ forecastData }) => {
               </button>
             </div>
 
-            <div className="modal-body">
-              <p style={{ marginBottom: '1rem', color: 'var(--muted)' }}>
-                Select the content you want to include in your PDF report:
-              </p>
+              <div className="modal-body">
+                <p style={{ marginBottom: '1rem', color: 'var(--muted)' }}>
+                  Select the content you want to include in your PDF report:
+                </p>
 
-              <div className="export-options">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeText}
-                    onChange={() => handleCheckboxChange('includeText')}
-                  />
-                  <span>Executive Summary & Text Content</span>
-                </label>
+                <div className="export-options">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.includeText}
+                      onChange={() => handleCheckboxChange('includeText')}
+                    />
+                    {/* Match the page/section heading used in the PDF content */}
+                    <span>Executive Summary</span>
+                  </label>
 
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeForecastTable}
-                    onChange={() => handleCheckboxChange('includeForecastTable')}
-                  />
-                  <span>Forecast Predictions Table</span>
-                </label>
+                  
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.includeMetrics}
+                      onChange={() => handleCheckboxChange('includeMetrics')}
+                    />
+                    {/* Match the page KPI section title */}
+                    <span>Forecast Accuracy & Performance</span>
+                  </label>
+                  <label className="checkbox-label">
+                    
+                    
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.includeForecastTable}
+                      onChange={() => handleCheckboxChange('includeForecastTable')}
+                    />
+                    {/* Match the Threat Forecast section title on the page */}
+                    <span>Threat Forecast</span>
+                  </label>
 
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeMetrics}
-                    onChange={() => handleCheckboxChange('includeMetrics')}
-                  />
-                  <span>Performance Metrics</span>
-                </label>
+                  {/* Sub-options for Forecast info modals */}
+                  <div style={{ marginLeft: '1rem', marginTop: 6 }}>
+                    <label className="checkbox-label" style={{ marginLeft: '0.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={exportOptions.includeCIInfo}
+                        onChange={() => handleCheckboxChange('includeCIInfo')}
+                      />
+                      <span style={{ fontSize: '0.9rem' }}>Include Confidence Interval info</span>
+                    </label>
 
-                <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontWeight: '600' }}>
-                  Charts & Graphs:
+                    <label className="checkbox-label" style={{ marginLeft: '0.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={exportOptions.includeSpikeInfo}
+                        onChange={() => handleCheckboxChange('includeSpikeInfo')}
+                      />
+                      <span style={{ fontSize: '0.9rem' }}>Include Spike Risk info</span>
+                    </label>
+                    
+                    <label className="checkbox-label" style={{ marginLeft: '0.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={exportOptions.includeConfidenceInfo}
+                        onChange={() => handleCheckboxChange('includeConfidenceInfo')}
+                      />
+                      <span style={{ fontSize: '0.9rem' }}>Include Confidence info</span>
+                    </label>
+                  </div>
+
+                  
+
+                  <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontWeight: '600' }}>
+                    {/* Match the charts section heading from the page */}
+                    AI-Powered Analytics &amp; Insights
+                  </div>
+
+                    <div style={{ marginLeft: '1rem' }}>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={exportOptions.includePredictedThreatTypes}
+                          onChange={() => handleCheckboxChange('includePredictedThreatTypes')}
+                        />
+                        <span>Predicted Threat Types</span>
+                      </label>
+
+                      <label className="checkbox-label" style={{ marginLeft: '1.25rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={exportOptions.includePredictedThreatTypesInfo}
+                          onChange={() => handleCheckboxChange('includePredictedThreatTypesInfo')}
+                        />
+                        <span style={{ fontSize: '0.9rem' }}>Include Predicted Threat Types info</span>
+                      </label>
+                    </div>
+
+                    <div style={{ marginLeft: '1rem', marginTop: 6 }}>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={exportOptions.includeKeySignals}
+                          onChange={() => handleCheckboxChange('includeKeySignals')}
+                        />
+                        <span>Key Signals</span>
+                      </label>
+
+                      <label className="checkbox-label" style={{ marginLeft: '1.25rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={exportOptions.includeKeySignalsInfo}
+                          onChange={() => handleCheckboxChange('includeKeySignalsInfo')}
+                        />
+                        <span style={{ fontSize: '0.9rem' }}>Include Key Signals info</span>
+                      </label>
+                    </div>
+
+                    <div style={{ marginLeft: '1rem', marginTop: 6 }}>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={exportOptions.includeRiskMatrix}
+                          onChange={() => handleCheckboxChange('includeRiskMatrix')}
+                        />
+                        <span>Risk Matrix — Confidence vs Impact</span>
+                      </label>
+
+                      <label className="checkbox-label" style={{ marginLeft: '1.25rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={exportOptions.includeRiskMatrixInfo}
+                          onChange={() => handleCheckboxChange('includeRiskMatrixInfo')}
+                        />
+                        <span style={{ fontSize: '0.9rem' }}>Include Risk Matrix info</span>
+                      </label>
+                    </div>
                 </div>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeLossBySector}
-                    onChange={() => handleCheckboxChange('includeLossBySector')}
-                  />
-                  <span>Loss by Sector Chart</span>
-                </label>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeThreatSeverity}
-                    onChange={() => handleCheckboxChange('includeThreatSeverity')}
-                  />
-                  <span>Predicted Threat Severity</span>
-                </label>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeTopCVEs}
-                    onChange={() => handleCheckboxChange('includeTopCVEs')}
-                  />
-                  <span>Top Predicted CVE Threats</span>
-                </label>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeThreatTrends}
-                    onChange={() => handleCheckboxChange('includeThreatTrends')}
-                  />
-                  <span>Threat Trend Predictions</span>
-                </label>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeGeographic}
-                    onChange={() => handleCheckboxChange('includeGeographic')}
-                  />
-                  <span>Geographic Threat Forecast</span>
-                </label>
               </div>
-            </div>
 
             <div className="modal-footer">
-              <button 
-                className="button secondary" 
-                onClick={() => setShowModal(false)}
-                disabled={isExporting}
-              >
-                Cancel
-              </button>
+              
               <button 
                 className="button primary" 
                 onClick={generatePDF}

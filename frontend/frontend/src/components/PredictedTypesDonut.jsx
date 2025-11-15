@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DonutChart from './DonutChart';
 
 // PredictedTypesDonut expects predictedTypes: [{ threat_type, probability }]
@@ -8,9 +8,55 @@ export default function PredictedTypesDonut({ predictedTypes }) {
   // Choose a color palette fallback
   const palette = ['#3b82f6', '#f97316', '#ef4444', '#a78bfa', '#10b981', '#f59e0b'];
 
+  // Slightly smaller outerRadius and increased wrapper height to make room for legend below
   return (
-    <div style={{ width: '100%', height: 240 }}>
-      <DonutChart data={data} colors={palette} innerRadius={60} outerRadius={90} height={240} />
+    <DonutWrapper data={data} palette={palette} />
+  );
+}
+
+function DonutWrapper({ data, palette }) {
+  const [hovered, setHovered] = useState(null);
+
+  const descriptions = {
+    'Exploit': 'An active exploitation of a vulnerability — evidence of attackers leveraging a flaw in software to gain access or execute code.',
+    'Malware': 'Malicious software families (trojans, ransomware, backdoors) observed or likely to be involved in attacks.',
+    'Vulnerability Disclosure': 'Public disclosure of vulnerabilities which can increase exploit risk if not patched promptly.',
+    'Phishing': 'Social-engineering attacks aimed at tricking users into revealing credentials or executing malicious actions.',
+    'Ransomware': 'Malware that encrypts data and demands payment; typically high-impact for operations.',
+    'Default': 'No description available for this threat type.'
+  };
+
+  const handlePieEnter = (entry, index) => {
+    if (entry && entry.name) setHovered(entry.name);
+  };
+
+  const handlePieLeave = () => setHovered(null);
+
+  return (
+    <div style={{ width: '100%', height: 320, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ width: '100%', height: 260 }}>
+        <DonutChart
+          data={data}
+          colors={palette}
+          innerRadius={60}
+          outerRadius={80}
+          height={260}
+          onPieEnter={handlePieEnter}
+          onPieLeave={handlePieLeave}
+        />
+      </div>
+
+      <div style={{ width: '100%', maxWidth: 360, marginTop: 8 }}>
+        {hovered ? (
+          <div style={{ color: 'var(--muted)', fontSize: 14 }}>
+            <strong>{hovered}:</strong> {descriptions[hovered] || descriptions['Default']}
+          </div>
+        ) : (
+          <div style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center' }}>
+            Hover a slice to see a short description of the threat type.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
