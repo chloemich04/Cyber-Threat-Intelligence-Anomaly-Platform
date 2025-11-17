@@ -11,10 +11,10 @@ import json
 import os
 import random
 from django.db import connection
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg
 from django.core.cache import cache
 
-from .models import ThreatIndicator, CveCountsByRegion
+from .models import CveCountsByRegionEpss, CveCountsByRegion
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -43,6 +43,41 @@ def heatmap_data(request):
     ]
 
     return JsonResponse(results, safe=False)
+
+
+@api_view(['GET'])
+def ranking_bar_chart_data(request):
+    cached_data = cache.get('ranking_bar_chart_data')
+    if cached_data:
+        return Response(cached_data)
+
+    aggregated = (
+        CveCountsByRegionEpss.objects
+        .values('region_code')
+        .annotate(
+            total_cves=Sum('cve_count'),
+            avg_epss=Avg('avg_epss')
+        )
+    )
+
+    aggregated_list = sorted(
+        aggregated,
+        key=lambda k: k['total_cves'],
+        reverse=True
+    )
+
+    ranked_data = []
+    rank = 1
+    for row in aggregated_list:
+        ranked_data.append({
+            "state": row['region_code'],
+            "cve_count": row['total_cves'],
+            "avg_epss": row['avg_epss'],
+            "rank_overall": rank
+        })
+        rank += 1
+
+    return Response(ranked_data)
 
 
 

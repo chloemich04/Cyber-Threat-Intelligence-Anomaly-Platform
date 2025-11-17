@@ -7,7 +7,7 @@ import DashboardPDFExport from './components/DashboardPDFExport';
 import LossBySectorBarChart from './components/LossBySectorBarChart';
 import ThreatList from "./components/ThreatList"
 import SeverityDonutChart from "./components/SeverityDonutChart"
-import TopThreatTypesChart from "./components/TopThreatTypesChart"
+import RankingBarChart from "./components/RankingBarChart"
 import USHeatmap from './components/USHeatmap';
 import { useNavigation, useFilters, useMetrics, useThreatData, useInsights } from './context/AppContext';
 
@@ -149,13 +149,13 @@ export default function App(){
 
             <div className="chart-box" aria-label="Top threat types ranked">
               <div className="chart-header">
-                <h3 className="chart-title">Top Vulnerable Technologies</h3>
+                <h3 className="chart-title">Rankings</h3>
               </div>
               <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                <div className="chart-container" style={{height: '300px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
                   <div>
-                      {/*<TopThreatTypesChart /> */}
-                      Bar Chart Coming Soon
+                      {/*Bar Chart Coming Soon */}
+                      <RankingBarChart />
                   </div>
                 </div>
               </div>
