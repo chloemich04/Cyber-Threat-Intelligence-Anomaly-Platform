@@ -30,7 +30,7 @@ class CveCountsByRegion(models.Model):
 
 class CveCountsByRegionEpss(models.Model):
     region_code = models.TextField(blank=True, null=True)
-    cve_id = models.TextField(blank=True, null=True)
+    cve_id = models.TextField(blank=True, null=False, primary_key=True)
     cve_count = models.BigIntegerField()
     avg_epss = models.FloatField(blank=True, null=True)
     name = models.TextField(blank=True, null=True)
