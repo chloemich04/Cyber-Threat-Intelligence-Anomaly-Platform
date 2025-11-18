@@ -12,6 +12,7 @@ urlpatterns = [
     path('forecast/latest/', get_latest_forecast, name='forecast-latest'),
     path('forecast/charts/', forecast_chart_data, name='forecast-charts'),
     path('heatmap_data/', views.heatmap_data, name='heatmap-data'),
+    path('heatmap/state/<str:region_code>/', views.heatmap_state_detail, name='heatmap-state-detail'),
     path('ranking_data/', views.ranking_bar_chart_data, name='ranking-data'),
 
 ]

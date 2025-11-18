@@ -47,6 +47,7 @@ const InfoModal = ({ open, onClose, title, children, ariaLabel = 'Information di
             border: 'none',
             fontSize: 18,
             cursor: 'pointer',
+            color: 'var(--white)',
           }}
         >
           ✕

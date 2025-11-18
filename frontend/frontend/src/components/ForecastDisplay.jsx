@@ -9,6 +9,7 @@ const ForecastDisplay = () => {
   const [showCIInfo, setShowCIInfo] = useState(false);
   const [showSpikeInfo, setShowSpikeInfo] = useState(false);
   const [showConfidenceInfo, setShowConfidenceInfo] = useState(false);
+  const [selectedSignal, setSelectedSignal] = useState(null);
 
   // Fetch latest forecast data when component mounts
   useEffect(() => {
@@ -25,6 +26,18 @@ const ForecastDisplay = () => {
     return () => {
       window.removeEventListener('forecastUpdated', handleForecastUpdate);
     };
+  }, []);
+
+  // listen for signalFilter events
+  useEffect(() => {
+    const handler = (e) => {
+      const sig = e?.detail?.signal;
+      if (sig) {
+        setSelectedSignal(sig);
+      }
+    };
+    window.addEventListener('signalFilter', handler);
+    return () => window.removeEventListener('signalFilter', handler);
   }, []);
 
   const fetchLatestForecast = async () => {
@@ -122,7 +135,24 @@ const ForecastDisplay = () => {
             </p>
           )}
         </div>
-        
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {selectedSignal && (
+            <div style={{ background: 'rgba(56,189,248,0.06)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>Filtering by:</div>
+              <div style={{ fontWeight: 700 }}>{selectedSignal.label}</div>
+              <button
+                className="button small"
+                onClick={() => {
+                  setSelectedSignal(null);
+                  // notify other components to clear their selection
+                  window.dispatchEvent(new CustomEvent('signalFilter', { detail: { signal: null } }));
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <InfoModal open={showCIInfo} onClose={() => setShowCIInfo(false)} title="About the Confidence Interval">
@@ -253,30 +283,44 @@ const ForecastDisplay = () => {
                 </tr>
               </thead>
               <tbody>
-                {countryPredictions.map((pred, idx) => (
-                  <tr key={idx}>
-                    <td>{formatDate(pred.week_start)}</td>
-                    <td><strong>{pred.expected_count}</strong></td>
-                    <td>
-                      {pred.expected_count_ci ? 
-                        `${pred.expected_count_ci[0]} - ${pred.expected_count_ci[1]}` 
-                        : 'N/A'}
-                    </td>
-                    <td>
-                      <span className={
-                        pred.spike_probability > 0.5 ? 'chip chip-danger' :
-                        pred.spike_probability > 0.3 ? 'chip chip-warning' :
-                        'chip chip-success'
-                      }>
-                        {(pred.spike_probability * 100).toFixed(0)}%
-                      </span>
-                    </td>
-                    <td>
-                      {pred.confidence != null ? `${(pred.confidence * 100).toFixed(0)}%` : 'N/A'}
-                    </td>
-                    
-                  </tr>
-                ))}
+                {countryPredictions.map((pred, idx) => {
+                  // determine if this row is highlighted by selectedSignal
+                  let rowStyle;
+                  if (selectedSignal) {
+                    const sigLabel = (selectedSignal.label || '').toString();
+                    const cveMatch = (sigLabel.match(/CVE-\d{4}-\d{1,7}/i) || [null])[0];
+                    const matches = (pred.top_signals || []).some(ts => {
+                      if (cveMatch) return ts.id && ts.id.toString().toUpperCase() === cveMatch.toUpperCase();
+                      // otherwise, match by tag or id substring
+                      return (ts.id && sigLabel.toLowerCase().includes(ts.id.toString().toLowerCase())) || (ts.signal_type && sigLabel.toLowerCase().includes(ts.signal_type.toLowerCase()));
+                    });
+                    if (matches) rowStyle = { background: 'rgba(56, 189, 248, 0.06)' };
+                  }
+
+                  return (
+                    <tr key={idx} style={rowStyle}>
+                      <td>{formatDate(pred.week_start)}</td>
+                      <td><strong>{pred.expected_count}</strong></td>
+                      <td>
+                        {pred.expected_count_ci ?
+                          `${pred.expected_count_ci[0]} - ${pred.expected_count_ci[1]}`
+                          : 'N/A'}
+                      </td>
+                      <td>
+                        <span className={
+                          pred.spike_probability > 0.5 ? 'chip chip-danger' :
+                          pred.spike_probability > 0.3 ? 'chip chip-warning' :
+                          'chip chip-success'
+                        }>
+                          {(pred.spike_probability * 100).toFixed(0)}%
+                        </span>
+                      </td>
+                      <td>
+                        {pred.confidence != null ? `${(pred.confidence * 100).toFixed(0)}%` : 'N/A'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             

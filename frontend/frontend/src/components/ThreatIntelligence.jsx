@@ -332,7 +332,7 @@ export default function ThreatIntelligence() {
               <div className="chart-content">
                 <div className="chart-container" style={{ height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ width: '100%', maxWidth: 720 }}>
-                    <KeySignalsBarChart signals={forecastData?.key_signals_user_friendly} />
+                    <KeySignalsBarChart signals={forecastData?.key_signals_user_friendly} predictions={forecastData?.predictions} />
                   </div>
                 </div>
               </div>

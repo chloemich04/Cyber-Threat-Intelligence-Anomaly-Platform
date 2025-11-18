@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -37,6 +37,34 @@ export default function ForecastRiskMatrix({ predictions = [], height = 260 }) {
       };
     });
   }, [predictions]);
+  const [selectedSignal, setSelectedSignal] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const sig = e?.detail?.signal;
+      setSelectedSignal(sig || null);
+    };
+    window.addEventListener('signalFilter', handler);
+    return () => window.removeEventListener('signalFilter', handler);
+  }, []);
+
+  // split data into highlighted and others based on selectedSignal
+  const { highlightedData, otherData } = useMemo(() => {
+    if (!selectedSignal) return { highlightedData: [], otherData: data };
+    const sigLabel = (selectedSignal.label || '').toString();
+    const cveMatch = (sigLabel.match(/CVE-\d{4}-\d{1,7}/i) || [null])[0];
+    const highlighted = [];
+    const others = [];
+    data.forEach(d => {
+      const p = d.raw || {};
+      const found = (p.top_signals || []).some(ts => {
+        if (cveMatch) return ts.id && ts.id.toString().toUpperCase() === cveMatch.toUpperCase();
+        return (ts.id && sigLabel.toLowerCase().includes(ts.id.toString().toLowerCase())) || (ts.signal_type && sigLabel.toLowerCase().includes(ts.signal_type.toLowerCase()));
+      });
+      if (found) highlighted.push(d); else others.push(d);
+    });
+    return { highlightedData: highlighted, otherData: others };
+  }, [selectedSignal, data]);
 
   if (!data || data.length === 0) {
     return <div style={{ padding: 12, color: 'var(--muted)' }}>No data for risk matrix.</div>;
@@ -82,7 +110,14 @@ export default function ForecastRiskMatrix({ predictions = [], height = 260 }) {
           <ReferenceLine x={impactMedian} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
           <ReferenceLine y={confidenceThreshold} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
 
-          <Scatter name="Predictions" data={data} fill="#ef4444" onClick={(d) => handlePointClick(d)} />
+          {/* Render non-highlighted points first */}
+          {otherData && otherData.length > 0 && (
+            <Scatter name="Predictions" data={otherData} fill="#ef4444" onClick={(d) => handlePointClick(d)} />
+          )}
+          {/* Render highlighted points on top with a distinct color/size */}
+          {highlightedData && highlightedData.length > 0 && (
+            <Scatter name="Highlighted" data={highlightedData} fill="#38bdf8" onClick={(d) => handlePointClick(d)} />
+          )}
         </ScatterChart>
       </ResponsiveContainer>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, color: 'var(--muted)', fontSize: 13 }}>

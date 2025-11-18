@@ -9,6 +9,7 @@ import ThreatList from "./components/ThreatList"
 import SeverityDonutChart from "./components/SeverityDonutChart"
 import RankingBarChart from "./components/RankingBarChart"
 import USHeatmap from './components/USHeatmap';
+import InfoModal from './components/InfoModal';
 import { useNavigation, useFilters, useMetrics, useThreatData, useInsights } from './context/AppContext';
 
 export default function App(){
@@ -19,6 +20,8 @@ export default function App(){
   const { insights } = useInsights();
 
   const [threats, setThreats] = useState([]);
+  const [showHeatmapInfo, setShowHeatmapInfo] = useState(false);
+  const [showRankingsInfo, setShowRankingsInfo] = useState(false);
 
 
 
@@ -91,11 +94,45 @@ export default function App(){
             <div className="kpi"><div className="label">Exposure Score (0–100)</div><div className="value">—</div></div>
             <div className="kpi"><div className="label">KEV / Active Exploits</div><div className="value">—</div></div>
           </div>
+          <InfoModal open={showRankingsInfo} onClose={() => setShowRankingsInfo(false)} title="Rankings">
+            <p>
+              The Rankings chart shows the top items (threat types, actors, or technologies) ordered by the selected metric (frequency, impact or score).
+              Use it to quickly see which items are most prominent in the dataset and track changes over time.
+            </p>
+            <ul style={{ marginTop: 8 }}>
+              <li><strong>What it shows:</strong> relative ranking by the chosen metric (e.g. incident count or estimated impact).</li>
+              <li><strong>How to use:</strong> click an item to drill into details where supported.</li>
+              <li><strong>Limitations:</strong> rankings aggregate upstream data sources and may be biased by reporting differences; use alongside the heatmap for context.</li>
+            </ul>
+            <p style={{ marginTop: 8 }}>
+              Tip: combine the Rankings view with filters (year and risk level) to produce targeted leaderboards for your operational priorities.
+            </p>
+          </InfoModal>
         </section>
 
         {/* Heatmap */}
         <section className="panel" style={{gridColumn: '1 / 2'}}>
-          <h3>Threat Activity Heatmap</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ margin: 0 }}>Threat Activity Heatmap</h3>
+            <button
+              type="button"
+              title="What the heatmap shows"
+              style={{
+                marginLeft: 8,
+                fontSize: 12,
+                color: 'var(--muted)',
+                cursor: 'pointer',
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                alignItems: 'center',
+              }}
+              aria-label="Threat activity heatmap info"
+              onClick={() => setShowHeatmapInfo(true)}
+            >
+              ℹ️
+            </button>
+          </div>
           <div className="heatmap" style={{ width: '100%', height: '500px' }} aria-label="Geographic heatmap">
               <USHeatmap />
           </div>
@@ -110,6 +147,21 @@ export default function App(){
               <span>No Data</span>
             </div>
           </div>
+
+          <InfoModal open={showHeatmapInfo} onClose={() => setShowHeatmapInfo(false)} title="Threat Activity Heatmap">
+            <p>
+              The Threat Activity Heatmap visualizes geographic intensity of observed or predicted threat activity across regions. Color
+              intensity indicates relative activity (darker = more activity) over the selected timeframe.
+            </p>
+            <ul style={{ marginTop: 8 }}>
+              <li><strong>What it shows:</strong> aggregated counts or scores mapped to geography — use it to spot regional hotspots.</li>
+              <li><strong>How to use:</strong> use the legend to interpret intensity and click on a state to see more information.</li>
+              <li><strong>Timeframe:</strong> the map reflects the dataset's configured window (see year filter in the toolbar).</li>
+            </ul>
+            <p style={{ marginTop: 8 }}>
+              Data sources include CVE activity, exploit telemetry, and aggregated incident reports. Use this map as a situational awareness tool, not a definitive attribution or complete picture.
+            </p>
+          </InfoModal>
 
         </section>
 
@@ -149,7 +201,26 @@ export default function App(){
 
             <div className="chart-box" aria-label="Top threat types ranked" data-dashboard-chart-id="vulnerable-tech">
               <div className="chart-header">
-                <h3 className="chart-title">Rankings</h3>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <h3 className="chart-title" style={{ margin: 0 }}>Rankings</h3>
+                  <button
+                    type="button"
+                    title="What the rankings chart shows"
+                    style={{
+                      marginLeft: 8,
+                      fontSize: 12,
+                      color: 'var(--muted)',
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                    }}
+                    aria-label="Rankings info"
+                    onClick={() => setShowRankingsInfo(true)}
+                  >
+                    ℹ️
+                  </button>
+                </div>
               </div>
               <div className="chart-content">
                 <div className="chart-container" style={{height: '300px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
