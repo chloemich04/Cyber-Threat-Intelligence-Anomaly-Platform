@@ -560,6 +560,19 @@ main{
 
 .member-avatar {
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent);
+  margin: 0 auto;
+  display: block;
 }
 
 .avatar-placeholder {

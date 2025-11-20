@@ -58,23 +58,6 @@ export default function App(){
 
           <select 
             className="select" 
-            aria-label="Sector filter" 
-            value={filters.sector || 'Sector'}
-            onChange={(e) => setFilter('sector', e.target.value === 'Sector' ? null : e.target.value)}
-          >
-            <option>Sector</option>
-            <option>Finance & Insurance</option>
-            <option>Healthcare</option>
-            <option>Education</option>
-            <option>Retail & E-Commerce</option>
-            <option>Manufacturing</option>
-            <option>Energy & Utilities</option>
-            <option>Technology & SaaS</option>
-            <option>Transportation & Logistics</option>
-          </select>
-
-          <select 
-            className="select" 
             aria-label="Risk level" 
             value={filters.riskLevel || 'Risk Level'}
             onChange={(e) => setFilter('riskLevel', e.target.value === 'Risk Level' ? null : e.target.value)}
