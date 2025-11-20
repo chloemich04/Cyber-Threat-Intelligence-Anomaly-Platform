@@ -1,274 +1,174 @@
-import React, { useEffect, useRef } from 'react';
-import Map from '@arcgis/core/Map';
-import MapView from '@arcgis/core/views/MapView';
-import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
-import SimpleRenderer from '@arcgis/core/renderers/SimpleRenderer';
-import ClassBreaksRenderer from '@arcgis/core/renderers/ClassBreaksRenderer';
-import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
-import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
-import { useThreatData, useFilters } from '../context/AppContext';
+import React, { useState, useEffect } from "react";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
-function USHeatmap() {
-  const mapRef = useRef(null);
-  const { threatData } = useThreatData();
-  const { filters } = useFilters();
+const stateMap = {
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+};
+
+const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+
+const USHeatmap = () => {
+  const [data, setData] = useState({});
+  const [selectedState, setSelectedState] = useState(null);
 
   useEffect(() => {
-    let view = null;
+    fetch("http://127.0.0.1:8000/api/heatmap_data/")
+      .then((res) => res.json())
+      .then((rawData) => {
+        const agg = rawData.reduce((acc, item) => {
+          const code = item.region_code;
 
-    const initializeMap = async () => {
-      try {
-        // Create a map with light basemap for better contrast
-        const map = new Map({
-          basemap: 'gray-vector'
-        });
+          if (!acc[code])
+              acc[code] = 0;
 
-        // Create the MapView centered on United States
-        view = new MapView({
-          container: mapRef.current,
-          map: map,
-          center: [-98.5795, 39.8283],
-          zoom: 4,
-          ui: {
-            components: [] // Clean UI
-          }
-        });
+          acc[code] += item.total_cves || 0;
+          return acc;
+        }, {});
 
-        // Get state threat data from context
-        const stateThreatData = threatData.stateThreatData || {};
+        const mappedData = {};
+        for (const code in stateMap) {
+          const name = stateMap[code];
+          mappedData[name] = agg[code] ? agg[code] : 0
+        }
 
-        // Create heatmap renderer based on threat data
-        const createHeatmapRenderer = () => {
-          // Calculate threat values for classification
-          const threatValues = Object.values(stateThreatData).map(state => state.threats || 0);
-          const maxThreats = Math.max(...threatValues, 1); // Avoid division by zero
-          
-          return new ClassBreaksRenderer({
-            field: 'threat_count',
-            classBreakInfos: [
-              {
-                minValue: 0,
-                maxValue: maxThreats * 0.2,
-                symbol: new SimpleFillSymbol({
-                  color: [255, 255, 178, 0.8], // Light yellow - low threat
-                  outline: new SimpleLineSymbol({
-                    color: [100, 100, 100, 0.8],
-                    width: 1
-                  })
-                }),
-                label: 'Low Threat'
-              },
-              {
-                minValue: maxThreats * 0.2,
-                maxValue: maxThreats * 0.4,
-                symbol: new SimpleFillSymbol({
-                  color: [253, 204, 138, 0.8], // Light orange
-                  outline: new SimpleLineSymbol({
-                    color: [100, 100, 100, 0.8],
-                    width: 1
-                  })
-                }),
-                label: 'Medium Low'
-              },
-              {
-                minValue: maxThreats * 0.4,
-                maxValue: maxThreats * 0.6,
-                symbol: new SimpleFillSymbol({
-                  color: [252, 141, 89, 0.8], // Orange
-                  outline: new SimpleLineSymbol({
-                    color: [100, 100, 100, 0.8],
-                    width: 1
-                  })
-                }),
-                label: 'Medium Threat'
-              },
-              {
-                minValue: maxThreats * 0.6,
-                maxValue: maxThreats * 0.8,
-                symbol: new SimpleFillSymbol({
-                  color: [227, 74, 51, 0.8], // Red
-                  outline: new SimpleLineSymbol({
-                    color: [100, 100, 100, 0.8],
-                    width: 1
-                  })
-                }),
-                label: 'High Threat'
-              },
-              {
-                minValue: maxThreats * 0.8,
-                maxValue: maxThreats,
-                symbol: new SimpleFillSymbol({
-                  color: [179, 0, 0, 0.8], // Dark red
-                  outline: new SimpleLineSymbol({
-                    color: [100, 100, 100, 0.8],
-                    width: 1
-                  })
-                }),
-                label: 'Very High Threat'
-              }
-            ]
-          });
-        };
+        setData(mappedData);
+      })
+      .catch((err) => console.error("Error fetching data:", err));
+  }, []);
 
-        // Use a reliable US States layer from ArcGIS Online
-        // This layer contains only US states with proper boundaries
-        const statesLayer = new FeatureLayer({
-          url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized/FeatureServer/0',
-          definitionExpression: "State_Name <> 'Alaska' AND State_Name <> 'Hawaii'", // Exclude non-contiguous states
-          renderer: createHeatmapRenderer(),
-          popupEnabled: true,
-          outFields: ['State_Name', 'State_Abbr', 'FID'],
-          opacity: 0.9
-        });
-
-        // Add the states layer
-        map.add(statesLayer);
-
-        // Wait for view and layer to be ready
-        await view.when();
-        await statesLayer.when();
-
-        // Function to update features with threat data
-        const updateLayerWithThreatData = async () => {
-          try {
-            // Query all features from the layer
-            const featureSet = await statesLayer.queryFeatures({
-              where: '1=1',
-              outFields: ['State_Name', 'State_Abbr', 'FID'],
-              returnGeometry: false
-            });
-
-            // Create attributes to update
-            const updates = featureSet.features.map(feature => {
-              const stateName = feature.attributes.State_Name;
-              const threatInfo = stateThreatData[stateName];
-              const threatCount = threatInfo?.threats || 0;
-              
-              return {
-                objectId: feature.attributes.FID || feature.attributes.OBJECTID,
-                attributes: {
-                  threat_count: threatCount,
-                  threat_level: getThreatLevel(threatCount, Math.max(...Object.values(stateThreatData).map(s => s.threats || 0), 1))
-                }
-              };
-            });
-
-            // Apply updates to the layer
-            if (updates.length > 0) {
-              await statesLayer.applyEdits({
-                updateFeatures: updates
-              });
-            }
-          } catch (error) {
-            console.warn('Could not update layer with threat data:', error);
-          }
-        };
-
-        // Helper function to determine threat level
-        const getThreatLevel = (count, max) => {
-          const ratio = count / max;
-          if (ratio === 0) return 'None';
-          if (ratio <= 0.2) return 'Low';
-          if (ratio <= 0.4) return 'Medium Low';
-          if (ratio <= 0.6) return 'Medium';
-          if (ratio <= 0.8) return 'High';
-          return 'Very High';
-        };
-
-        // Set up popup template
-        statesLayer.popupTemplate = {
-          title: '{State_Name}',
-          content: `
-            <div class="popup-content">
-              <div><strong>State:</strong> {State_Name}</div>
-              <div><strong>Abbreviation:</strong> {State_Abbr}</div>
-              <div><strong>Threat Count:</strong> {threat_count}</div>
-              <div><strong>Threat Level:</strong> {threat_level}</div>
-            </div>
-          `
-        };
-
-        // Update layer with threat data when ready
-        statesLayer.when(() => {
-          updateLayerWithThreatData();
-        });
-
-        // Fit view to US extent - this layer has proper US bounds
-        view.goTo({
-          target: statesLayer.fullExtent
-        }).catch(() => {
-          // Fallback to manual US bounds
-          view.goTo({
-            center: [-98.5795, 39.8283],
-            zoom: 4
-          });
-        });
-
-        // Add hover effect
-        let highlight = null;
-        
-        view.on('pointer-move', (event) => {
-          view.hitTest(event).then((response) => {
-            if (response.results.length > 0) {
-              const stateResult = response.results.find(result => 
-                result.graphic && result.graphic.layer === statesLayer
-              );
-              
-              if (stateResult) {
-                if (highlight) {
-                  highlight.remove();
-                }
-                
-                view.whenLayerView(statesLayer).then((layerView) => {
-                  highlight = layerView.highlight([stateResult.graphic.attributes.FID || stateResult.graphic.attributes.OBJECTID]);
-                });
-                
-                view.container.style.cursor = 'pointer';
-              } else {
-                if (highlight) {
-                  highlight.remove();
-                  highlight = null;
-                }
-                view.container.style.cursor = 'default';
-              }
-            } else {
-              if (highlight) {
-                highlight.remove();
-                highlight = null;
-              }
-              view.container.style.cursor = 'default';
-            }
-          });
-        });
-
-      } catch (error) {
-        console.error('Error initializing map:', error);
-      }
-    };
-
-    initializeMap();
-
-    // Cleanup
-    return () => {
-      if (view) {
-        view.destroy();
-      }
-    };
-  }, [threatData, filters]);
+  const getColor = (count) => {
+    if (!count || count === 0)
+        return "#444"; // gray ~ no data
+    const max = Math.max(...Object.values(data));
+    const intensity = Math.min(Math.log(count + 1) / Math.log(max + 1), 1); // logarithmic scale
+    const red = Math.floor(255 * intensity);
+    const green = Math.floor(255 * (1 - intensity));
+    return `rgb(${red}, ${green}, 50)`; // green -> red gradient
+  };
 
   return (
-    <div 
-      ref={mapRef} 
-      style={{ 
-        width: '100%', 
-        height: '100%', 
-        minHeight: '400px',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-      }} 
-    />
+    <div style={{ display: "flex", gap: "20px" }}>
+      <div style={{ width: "70%", position: "relative" }}>
+        <ComposableMap
+          projection="geoAlbersUsa"
+          projectionConfig={{ scale: 1000, translate: [480, 300] }}
+          style={{ width: "100%", height: "500px" }}
+        >
+          <Geographies geography={geoUrl}>
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const stateName = geo.properties.name;
+                const count = data[stateName] || 0;
+
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill={getColor(count)}
+                    stroke="#FFF"
+                    onClick={() =>
+                      setSelectedState({
+                        name: stateName,
+                        count: count,
+                      })
+                    }
+                    style={{
+                      default: { outline: "none" },
+                      hover: { fill: "#f39c12", outline: "none" },
+                      pressed: { fill: "#e67e22", outline: "none" },
+                    }}
+                  >
+                    <title>
+                      {stateName} — Total CVEs: {count > 0 ? count : "No data"}
+                    </title>
+                  </Geography>
+                );
+              })
+            }
+          </Geographies>
+        </ComposableMap>
+
+
+      </div>
+
+      {/* Side panel */}
+      <div
+        style={{
+          flex: 1,
+          background: "#1e1e1e",
+          color: "white",
+          padding: "16px",
+          borderRadius: "8px",
+          overflowY: "auto",
+          maxHeight: "500px",
+        }}
+      >
+        {selectedState ? (
+          <>
+            <h3>{selectedState.name}</h3>
+            {selectedState.count > 0 ? (
+              <p>
+                Total CVEs: <strong>{selectedState.count}</strong>
+              </p>
+            ) : (
+              <p>No CVE data available.</p>
+            )}
+          </>
+        ) : (
+          <p>Select a state to view CVE data.</p>
+        )}
+      </div>
+    </div>
   );
-}
+};
 
 export default USHeatmap;

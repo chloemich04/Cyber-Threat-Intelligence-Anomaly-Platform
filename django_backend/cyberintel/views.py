@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from django.utils import timezone
+from django.utils import timezone, cache
 from django.http import JsonResponse
 from django.conf import settings
 from datetime import timedelta, datetime
@@ -10,31 +10,75 @@ import pandas as pd
 import json
 import os
 import random
-from .models import ThreatIndicator
 from django.db import connection
-from django.db.models import Count
-from django.http import JsonResponse
+from django.db.models import Count, Sum, Avg
+from django.core.cache import cache
 
-from .models import ThreatIndicator, Threat, CweSoftwareDevelopment, NvdDataEnriched
-from .serializers import ThreatSerializer, CweSoftwareDevelopmentSerializer, NvdDataEnrichedSerializer
+from .models import CveCountsByRegionEpss, CveCountsByRegion
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
 
 
 # Create your views here.
+def heatmap_data(request):
+    cached_data = cache.get('heatmap_data')
+    if cached_data:
+        return JsonResponse(cached_data, safe=False)
+    """
+    Returns aggregated CVE counts per state.
+    """
 
-class ThreatListCreateView(generics.ListCreateAPIView):
-    queryset = Threat.objects.all()
-    serializer_class = ThreatSerializer
+    # Aggregate CVE counts by state
+    data = (
+        CveCountsByRegion.objects
+        .values('region_code')
+        .annotate(total_cves=Sum('cve_count'))
+        .order_by('region_code')
+    )
 
-class CweSoftwareDevelopmentListCreateView(generics.ListCreateAPIView):
-    queryset = CweSoftwareDevelopment.objects.all()
-    serializer_class = CweSoftwareDevelopmentSerializer
+    results = [
+        {'region_code': item['region_code'], 'total_cves': item['total_cves']}
+        for item in data
+    ]
 
-class NvdDataEnrichedListCreateView(generics.ListCreateAPIView):
-    queryset = NvdDataEnriched.objects.all()
-    serializer_class = NvdDataEnrichedSerializer
+    return JsonResponse(results, safe=False)
+
+
+@api_view(['GET'])
+def ranking_bar_chart_data(request):
+    cached_data = cache.get('ranking_bar_chart_data')
+    if cached_data:
+        return Response(cached_data)
+
+    aggregated = (
+        CveCountsByRegionEpss.objects
+        .values('region_code')
+        .annotate(
+            total_cves=Sum('cve_count'),
+            avg_epss=Avg('avg_epss')
+        )
+    )
+
+    aggregated_list = sorted(
+        aggregated,
+        key=lambda k: k['total_cves'],
+        reverse=True
+    )
+
+    ranked_data = []
+    rank = 1
+    for row in aggregated_list:
+        ranked_data.append({
+            "state": row['region_code'],
+            "cve_count": row['total_cves'],
+            "avg_epss": row['avg_epss'],
+            "rank_overall": rank
+        })
+        rank += 1
+
+    return Response(ranked_data)
+
 
 
 @api_view(['POST'])
@@ -326,11 +370,4 @@ def get_latest_forecast(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-def top_threat_types(request):
-    data = (
-        Threat.objects
-        .values('threat_type')
-        .annotate(count=Count('id'))
-        .order_by('-count')
-    )
-    return JsonResponse(list(data), safe=False)
+
