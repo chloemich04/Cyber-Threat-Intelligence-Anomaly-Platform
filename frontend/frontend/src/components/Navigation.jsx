@@ -34,18 +34,6 @@ const Navigation = () => {
             AI Threat Intelligence
           </button>
           <button 
-            onClick={() => handleNavigation('analytics')} 
-            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
-          >
-            Analytics
-          </button>
-          <button 
-            onClick={() => handleNavigation('reports')} 
-            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
-          >
-            Predictions
-          </button>
-          <button 
             onClick={() => handleNavigation('about')} 
             className={`nav-link ${currentPage === 'about' ? 'active' : ''}`}
           >
@@ -83,18 +71,6 @@ const Navigation = () => {
             className={`nav-link ${currentPage === 'threat-intelligence' ? 'active' : ''}`}
           >
             AI Threat Intelligence
-          </button>
-          <button 
-            onClick={() => handleNavigation('analytics')} 
-            className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}
-          >
-            Analytics
-          </button>
-          <button 
-            onClick={() => handleNavigation('reports')} 
-            className={`nav-link ${currentPage === 'reports' ? 'active' : ''}`}
-          >
-            Predictions
           </button>
           <button 
             onClick={() => handleNavigation('about')} 
