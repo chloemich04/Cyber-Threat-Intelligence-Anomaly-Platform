@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
+// Module-level cache to avoid re-fetching heatmap data across mounts/unmounts
+let _heatmapDataCache = null;
+let _heatmapDataFetched = false;
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
 const stateMap = {
@@ -61,7 +65,16 @@ const USHeatmap = () => {
   const [selectedState, setSelectedState] = useState(null);
   const [loadingState, setLoadingState] = useState(false);
 
+  const fetchedRef = useRef(false);
   useEffect(() => {
+    if (_heatmapDataFetched && _heatmapDataCache) {
+      setData(_heatmapDataCache);
+      return;
+    }
+
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     fetch("http://127.0.0.1:8000/api/heatmap_data/")
       .then((res) => res.json())
       .then((rawData) => {
@@ -145,6 +158,21 @@ const USHeatmap = () => {
         }
 
         setData(mappedData);
+        _heatmapDataFetched = true;
+        _heatmapDataCache = mappedData;
+        // Notify other parts of the app that canonical heatmap data is available.
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('heatmapLoaded', { detail: { mappedData } }));
+          }
+        } catch (e) {
+          // fallback for older browsers
+          try {
+            const ev = document.createEvent('CustomEvent');
+            ev.initCustomEvent('heatmapLoaded', true, true, { mappedData });
+            window.dispatchEvent(ev);
+          } catch (err) {}
+        }
       })
       .catch((err) => console.error("Error fetching data:", err));
   }, []);
@@ -194,12 +222,20 @@ const USHeatmap = () => {
 
                             // optimistic select to show immediate feedback
                             setSelectedState({ name: stateName, count: count, loading: true });
+                            // Broadcast the state selection so other components can react 
+                            try {
+                              window.dispatchEvent(new CustomEvent('stateSelected', { detail: { name: stateName, code, region_code: code, total_cves: count } }));
+                            } catch (e) {
+                              // older browsers fallback
+                              const ev = document.createEvent('CustomEvent');
+                              ev.initCustomEvent('stateSelected', true, true, { name: stateName, code, region_code: code, total_cves: count });
+                              window.dispatchEvent(ev);
+                            }
                             if (!code) {
                               // no code mapping; just set what we have
                               setSelectedState({ name: stateName, count: count });
                               return;
                             }
-
                             setLoadingState(true);
                             fetch(`http://127.0.0.1:8000/api/heatmap/state/${code}/`)
                               .then(res => {
@@ -247,7 +283,7 @@ const USHeatmap = () => {
       <div
         style={{
           flex: 1,
-          background: "#1e1e1e",
+          background: "#1f2937",
           color: "white",
           padding: "16px",
           borderRadius: "8px",
@@ -257,7 +293,33 @@ const USHeatmap = () => {
       >
         {selectedState ? (
           <>
-            <h3>{selectedState.name}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: 20, fontWeight: 'bold', margin: 0 }}>{selectedState.name}</h3>
+              <button
+                onClick={() => {
+                  setSelectedState(null);
+                  setLoadingState(false);
+                  try {
+                    window.dispatchEvent(new CustomEvent('stateCleared', { detail: {} }));
+                  } catch (e) {
+                    const ev = document.createEvent('CustomEvent');
+                    ev.initCustomEvent('stateCleared', true, true, {});
+                    window.dispatchEvent(ev);
+                  }
+                }}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'white',
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  cursor: 'pointer'
+                }}
+                aria-label="Clear state selection"
+              >
+                Clear
+              </button>
+            </div>
             {loadingState && <p style={{ fontStyle: 'italic', fontSize: 13 }}>Loading details...</p>}
             {selectedState.count > 0 ? (
               <>

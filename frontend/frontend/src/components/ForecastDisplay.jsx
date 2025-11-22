@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getLatestForecast } from '../utils/forecastCache';
 import InfoModal from './InfoModal';
 
 const ForecastDisplay = () => {
@@ -11,18 +12,18 @@ const ForecastDisplay = () => {
   const [showConfidenceInfo, setShowConfidenceInfo] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState(null);
 
-  // Fetch latest forecast data when component mounts
+  // Fetch latest forecast data when component mounts (cached per session)
   useEffect(() => {
     fetchLatestForecast();
-    
-    // Listen for forecast update events
+
+    // Listen for forecast update events (force refresh)
     const handleForecastUpdate = () => {
       console.log('Forecast updated, refreshing display...');
-      fetchLatestForecast();
+      fetchLatestForecast({ force: true });
     };
-    
+
     window.addEventListener('forecastUpdated', handleForecastUpdate);
-    
+
     return () => {
       window.removeEventListener('forecastUpdated', handleForecastUpdate);
     };
@@ -40,30 +41,22 @@ const ForecastDisplay = () => {
     return () => window.removeEventListener('signalFilter', handler);
   }, []);
 
-  const fetchLatestForecast = async () => {
+  const fetchLatestForecast = async ({ force = false } = {}) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('http://localhost:8000/api/forecast/latest/');
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('No forecast data available yet. Please run a forecast first.');
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        setLoading(false);
-        return;
-      }
-      
-      const data = await response.json();
+      const data = await getLatestForecast({ force });
       setForecastData(data);
       setLastUpdate(new Date(data.generated_at));
       setError(null);
     } catch (err) {
       console.error('Error fetching forecast:', err);
-      setError('Failed to load forecast data. Make sure the Django server is running.');
+      if (err && err.status === 404) {
+        setError('No forecast data available yet. Please run a forecast first.');
+      } else {
+        setError('Failed to load forecast data. Make sure the Django server is running.');
+      }
     } finally {
       setLoading(false);
     }

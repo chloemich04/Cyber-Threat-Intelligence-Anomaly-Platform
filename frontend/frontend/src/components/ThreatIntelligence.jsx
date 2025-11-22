@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import ForecastDisplay from './ForecastDisplay';
+import { getLatestForecast } from '../utils/forecastCache'; // Ensure forecast cache module is available
 import ForecastTimeline from './ForecastTimeline';
 import PDFExport from './PDFExport';
 import KeySignalsBarChart from './KeySignalsBarChart';
@@ -97,12 +98,10 @@ export default function ThreatIntelligence() {
   // Fetch forecast data for PDF export and charts
   const fetchForecastData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/forecast/latest/');
-      if (response.ok) {
-        const data = await response.json();
-        setForecastData(data);
-      }
+      const data = await getLatestForecast();
+      setForecastData(data);
     } catch (error) {
+      // keep non-fatal: component is fine without forecast data
       console.error('Error fetching forecast data:', error);
     }
   };
@@ -112,9 +111,11 @@ export default function ThreatIntelligence() {
     // Fetch forecast data on mount
     fetchForecastData();
 
-    // Listen for forecast updates
+    // Listen for forecast updates (force refresh)
     const handleForecastUpdate = () => {
       fetchForecastData();
+      // also invalidate and force-get latest from cache on other listeners
+      getLatestForecast({ force: true }).then(d => setForecastData(d)).catch(() => {});
     };
     window.addEventListener('forecastUpdated', handleForecastUpdate);
 
@@ -144,7 +145,7 @@ export default function ThreatIntelligence() {
   return (
     <>
       <header>
-        <div className="title">AI-Powered Threat Predictions</div>
+        <div className="title">AI-Powered Threat Predicted Analytics</div>
         <div className="subtitle">Advanced predictions and insights powered by OpenAI GPT-5 analyzing vulnerability data.</div>
 
         <div className="toolbar">

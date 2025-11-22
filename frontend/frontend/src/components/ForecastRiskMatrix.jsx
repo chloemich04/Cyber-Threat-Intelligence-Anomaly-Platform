@@ -112,11 +112,11 @@ export default function ForecastRiskMatrix({ predictions = [], height = 260 }) {
 
           {/* Render non-highlighted points first */}
           {otherData && otherData.length > 0 && (
-            <Scatter name="Predictions" data={otherData} fill="#ef4444" onClick={(d) => handlePointClick(d)} />
+            <Scatter name="Predictions" data={otherData} fill='#b2e0fcff' onClick={(d) => handlePointClick(d)} />
           )}
           {/* Render highlighted points on top with a distinct color/size */}
           {highlightedData && highlightedData.length > 0 && (
-            <Scatter name="Highlighted" data={highlightedData} fill="#38bdf8" onClick={(d) => handlePointClick(d)} />
+            <Scatter name="Highlighted" data={highlightedData} fill="#1d5872ff" onClick={(d) => handlePointClick(d)} />
           )}
         </ScatterChart>
       </ResponsiveContainer>

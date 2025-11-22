@@ -6,7 +6,9 @@ export default function PredictedTypesDonut({ predictedTypes }) {
   const data = (predictedTypes || []).map(pt => ({ name: pt.threat_type, value: Math.max(0, pt.probability || 0) }));
 
   // Choose a color palette fallback
-  const palette = ['#3b82f6', '#f97316', '#ef4444', '#a78bfa', '#10b981', '#f59e0b'];
+  const palette = ['#b2e0fcff', 
+    '#3a6e90ff', 
+    '#022a43ff'];
 
   // Slightly smaller outerRadius and increased wrapper height to make room for legend below
   return (

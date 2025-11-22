@@ -362,6 +362,19 @@ main{
   overflow: visible;
 }
 
+/* Prevent browser focus outlines or selection rectangles from appearing when interacting with charts */
+.chart-box, .chart-container, .recharts-responsive-container, .recharts-wrapper, .recharts-surface {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none;
+}
+
+.chart-box:focus, .chart-box *:focus, .chart-container:focus, .recharts-responsive-container:focus, .recharts-wrapper:focus, .recharts-surface:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Enhanced chart box styling */
 .chart-box {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);

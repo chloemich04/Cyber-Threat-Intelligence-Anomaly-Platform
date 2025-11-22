@@ -17,7 +17,12 @@ export default function App(){
   const { filters, setFilter } = useFilters();
   const { metrics } = useMetrics();
   const { threatData } = useThreatData();
-  const { insights } = useInsights();
+  const { insights, reloadInsights } = useInsights();
+  try {
+    console.debug('App render - insights from context:', insights);
+  } catch (e) {
+    // ignore logging failures in older browsers
+  }
 
   const [threats, setThreats] = useState([]);
   const [showHeatmapInfo, setShowHeatmapInfo] = useState(false);
@@ -40,7 +45,7 @@ export default function App(){
             <header>
         <div className="title">Cyber Threat Intelligence</div>
         <div className="subtitle">
-          This platform shows basic insight on cyber attacks with helpful visuals like maps, charts, and tables.
+          This platform informs everyday users on cyber attacks across the United States.
         </div>
 
         <div className="toolbar">
@@ -53,22 +58,6 @@ export default function App(){
             <option>Year</option><option>2023</option><option>2024</option><option>2025</option>
           </select>
 
-          <select 
-            className="select" 
-            aria-label="Sector filter" 
-            value={filters.sector || 'Sector'}
-            onChange={(e) => setFilter('sector', e.target.value === 'Sector' ? null : e.target.value)}
-          >
-            <option>Sector</option>
-            <option>Finance & Insurance</option>
-            <option>Healthcare</option>
-            <option>Education</option>
-            <option>Retail & E-Commerce</option>
-            <option>Manufacturing</option>
-            <option>Energy & Utilities</option>
-            <option>Technology & SaaS</option>
-            <option>Transportation & Logistics</option>
-          </select>
 
           <select 
             className="select" 
@@ -80,7 +69,7 @@ export default function App(){
           </select>
 
           <DashboardPDFExport />
-          <button className="button" type="button">Settings</button>
+          
         </div>
       </header>
 
@@ -88,12 +77,18 @@ export default function App(){
         {/* KPIs */}
         <section className="panel" style={{gridColumn: '1 / 2'}}>
           <h3>Key Metrics</h3>
-          <div className="kpis">
-            <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">-</div></div>
-            <div className="kpi"><div className="label">Average Loss / Incident</div><div className="value">—</div></div>
-            <div className="kpi"><div className="label">Exposure Score (0–100)</div><div className="value">—</div></div>
-            <div className="kpi"><div className="label">KEV / Active Exploits</div><div className="value">—</div></div>
-          </div>
+            <div className="kpis">
+              {metrics && metrics.totalIncidents == null ? (
+                <div style={{ fontStyle: 'italic', color: 'var(--muted)' }}>Loading metrics...</div>
+              ) : (
+                <>
+                  <div className="kpi"><div className="label">Total Cyber Incidents</div><div className="value">{metrics && metrics.totalIncidents != null ? metrics.totalIncidents.toLocaleString() : '—'}</div></div>
+                  <div className="kpi"><div className="label">Exposure Score (0–100)</div><div className="value">{metrics && metrics.exposureScore != null ? metrics.exposureScore : '—'}</div></div>
+                  <div className="kpi"><div className="label">Exploit Rate (%)</div><div className="value">{metrics && metrics.exploitRatePercent != null ? `${metrics.exploitRatePercent}%` : '—'}</div></div>
+                  <div className="kpi"><div className="label">% Critical CVEs (CVSS ≥ 9)</div><div className="value">{metrics && metrics.percentCritical != null ? `${metrics.percentCritical}%` : '—'}</div></div>
+                </>
+              )}
+            </div>
           <InfoModal open={showRankingsInfo} onClose={() => setShowRankingsInfo(false)} title="Rankings">
             <p>
               The Rankings chart shows the top items (threat types, actors, or technologies) ordered by the selected metric (frequency, impact or score).
@@ -105,7 +100,7 @@ export default function App(){
               <li><strong>Limitations:</strong> rankings aggregate upstream data sources and may be biased by reporting differences; use alongside the heatmap for context.</li>
             </ul>
             <p style={{ marginTop: 8 }}>
-              Tip: combine the Rankings view with filters (year and risk level) to produce targeted leaderboards for your operational priorities.
+              Tip: combine the Rankings view with filters (heatmap, year, and risk level) to produce targeted leaderboards for your operational priorities.
             </p>
           </InfoModal>
         </section>
@@ -167,9 +162,9 @@ export default function App(){
 
         {/* Charts Section - Historical Data (Not AI Predictions) */}
         <section className="panel charts-full-width">
-          <h3>Historical Threat Analytics</h3>
+          <h3>Threat Analytics</h3>
           <div className="subtitle" style={{marginBottom: '1rem', color: 'var(--muted)'}}>
-            Current and historical threat data (For AI predictions, see Threat Intelligence page)
+            {/* TO DO: add subtitle that changes based on what filters are on currently */}
           </div>
           <div className="charts">
             <div className="chart-box" aria-label="Incident severity distribution" data-dashboard-chart-id="incident-severity">
@@ -187,17 +182,6 @@ export default function App(){
               <LossBySectorBarChart />
             </div>
 
-            <div className="chart-box" aria-label="Breach type distribution" data-dashboard-chart-id="breach-types">
-              <div className="chart-header">
-                <h3 className="chart-title">Breach Type Distribution</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                    {/*<SeverityDonutChart threats={threats} />*/}
-                    Donut Chart Coming Soon
-                </div>
-              </div>
-            </div>
 
             <div className="chart-box" aria-label="Top threat types ranked" data-dashboard-chart-id="vulnerable-tech">
               <div className="chart-header">
@@ -222,9 +206,9 @@ export default function App(){
                   </button>
                 </div>
               </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '300px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  <div>
+                <div className="chart-content">
+                <div className="chart-container" style={{height: '360px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                  <div style={{ height: '100%', width: '100%' }}>
                       {/*Bar Chart Coming Soon */}
                       <RankingBarChart />
                   </div>
@@ -232,65 +216,41 @@ export default function App(){
               </div>
             </div>
 
-            <div className="chart-box" aria-label="Attack vector trends" data-dashboard-chart-id="attack-vectors">
-              <div className="chart-header">
-                <h3 className="chart-title">Attack Vector Trends</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  📈 Line Chart Coming Soon
-                </div>
-              </div>
-            </div>
-
-            <div className="chart-box" aria-label="Top vulnerable technologies" data-dashboard-chart-id="response-times">
-              <div className="chart-header">
-                <h3 className="chart-title">Incident Response Times</h3>
-              </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  ⏱️ Metrics Coming Soon
-                </div>
-              </div>
-            </div>
+          
           </div>
         </section>
 
-        {/* Threat summary table */}
-        <section className="panel" style={{gridColumn: '1 / 2'}}>
-          <h3>Threat Summary</h3>
-          <table className="table" aria-label="Threat summary table">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Incidents</th>
-                <th>% Change</th>
-                <th>Avg Loss</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {threatData.threatSummary.map((threat, index) => (
-                <tr key={index}>
-                  <td>{threat.category}</td>
-                  <td>{threat.incidents.toLocaleString()}</td>
-                  <td>{threat.change > 0 ? '+' : ''}{threat.change}%</td>
-                  <td>${threat.avgLoss.toLocaleString()}</td>
-                  <td>{threat.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+      
 
         {/* Insights sidebar */}
         <aside className="panel" style={{gridColumn: '2 / 3', gridRow: '1', alignSelf: 'start'}}>
           <h3>Insights</h3>
-          <div className="list">
-            <p><strong>Highest Rate:</strong> <span className="chip">{insights.highestRate}</span></p>
-            <p><strong>Lowest Rate:</strong> <span className="chip">{insights.lowestRate}</span></p>
-            <p><strong>Top Threat Types:</strong> {insights.topThreatTypes.join(', ')}</p>
-            <p><strong>Notes:</strong> {insights.notes}</p>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+            
+          </div>
+
+          <div className="list" style={{ marginTop: 8 }}>
+            {(!insights || !(insights.highestRate || (Array.isArray(insights.topThreatTypes) && insights.topThreatTypes.length) || insights.notes)) ? (
+              <p style={{ fontStyle: 'italic', color: 'var(--muted)' }}>Loading insights...</p>
+            ) : (
+              <>
+                <p><strong>Highest Rate:</strong> <span className="chip">{insights.highestRate || '—'}</span></p>
+                <p>
+                  <strong>Lowest Rate:</strong>
+                  {Array.isArray(insights.lowestRates) && insights.lowestRates.length ? (
+                    <span style={{ marginLeft: 8 }}>
+                      {insights.lowestRates.map((s, idx) => (
+                        <span key={idx} className="chip" style={{ marginRight: 8 }}>{s}</span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="chip" style={{ marginLeft: 8 }}>{insights.lowestRate || '—'}</span>
+                  )}
+                </p>
+                <p><strong>Top Threat Types:</strong> {Array.isArray(insights.topThreatTypes) ? (insights.topThreatTypes.length ? insights.topThreatTypes.join(', ') : '—') : '—'}</p>
+                <p><strong>Notes:</strong> {insights.notes || '—'}</p>
+              </>
+            )}
           </div>
         </aside>
       </main>
