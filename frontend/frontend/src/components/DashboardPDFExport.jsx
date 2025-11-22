@@ -158,12 +158,10 @@ const DashboardPDFExport = () => {
               const metricsData = metrics || {};
               const metrics = [
                 { label: 'Total Cyber Incidents', value: (metricsData.totalIncidents != null) ? String(metricsData.totalIncidents) : '—' },
-                // Average loss is not available from heatmap; keep placeholder
-                { label: 'Average Loss / Incident', value: (metricsData.averageLoss != null) ? String(metricsData.averageLoss) : '—' },
                 { label: 'Exposure Score (0-100)', value: (metricsData.exposureScore != null) ? String(metricsData.exposureScore) : '—' },
               ];
 
-        metrics.forEach((metric, idx) => {
+        metricsArray.forEach((metric, idx) => {
           if (idx % 2 === 0 && idx > 0) {
             yPosition += 22;
             checkPageBreak(22);
