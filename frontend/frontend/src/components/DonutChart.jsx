@@ -38,7 +38,16 @@ export default function DonutChart({ data = [], colors = {}, height = 280, inner
             })}
           </Pie>
           <Tooltip formatter={(value, name) => [value, name]} />
-          <Legend verticalAlign="bottom" align="center" layout="horizontal" iconType="square" height={36} />
+          <Legend
+            verticalAlign="bottom"
+            align="center"
+            layout="horizontal"
+            iconType="square"
+            height={36}
+            // Render legend text using CSS variable for muted color
+            formatter={(value) => <span style={{ color: 'var(--muted)' }}>{value}</span>}
+            wrapperStyle={{ color: 'var(--muted)' }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

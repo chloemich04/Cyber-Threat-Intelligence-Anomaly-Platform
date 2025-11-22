@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMetrics } from '../context/AppContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -23,6 +24,9 @@ const DashboardPDFExport = () => {
       [option]: !prev[option]
     }));
   };
+
+  // Read metrics from app context at component top-level (hooks must be called here)
+  const { metrics } = useMetrics();
 
   const captureChart = async (elementId) => {
     const element = document.querySelector(`[data-dashboard-chart-id="${elementId}"]`);
@@ -149,15 +153,15 @@ const DashboardPDFExport = () => {
         pdf.text('Key Metrics', margin + 3, yPosition + 5);
         yPosition += 16;
 
-        // Metrics in cards
-        const metrics = [
-          { label: 'Total Cyber Incidents', value: '—' },
-          { label: 'Average Loss / Incident', value: '—' },
-          { label: 'Exposure Score (0-100)', value: '—' },
-          { label: 'KEV / Active Exploits', value: '—' },
-        ];
+  // Metrics in cards
+  // Use metrics from application context so PDF values match the dashboard.
+              const metricsData = metrics || {};
+              const metrics = [
+                { label: 'Total Cyber Incidents', value: (metricsData.totalIncidents != null) ? String(metricsData.totalIncidents) : '—' },
+                { label: 'Exposure Score (0-100)', value: (metricsData.exposureScore != null) ? String(metricsData.exposureScore) : '—' },
+              ];
 
-        metrics.forEach((metric, idx) => {
+        metricsArray.forEach((metric, idx) => {
           if (idx % 2 === 0 && idx > 0) {
             yPosition += 22;
             checkPageBreak(22);
@@ -209,9 +213,9 @@ const DashboardPDFExport = () => {
         pdf.text('Threat Summary', margin + 3, yPosition + 5);
         yPosition += 16;
 
-        // Table with modern styling
-        const colWidths = [38, 22, 22, 22, 22];
-        const headers = ['Category', 'Incidents', '% Change', 'Avg Loss', 'Status'];
+  // Table with modern styling (removed 'Avg Loss' column — data not available)
+  const colWidths = [48, 28, 28, 28];
+  const headers = ['Category', 'Incidents', '% Change', 'Status'];
         let xPos = margin;
         
         // Draw table header background
@@ -236,14 +240,7 @@ const DashboardPDFExport = () => {
         
         yPosition += 8;
 
-        // Table data with modern styling
-        const threatData = [
-          ['Phishing', '1,245', '+12%', '$8,400', 'Rising'],
-          ['Ransomware', '530', '+4%', '$58,000', 'Stable'],
-          ['Malware', '890', '-6%', '$11,200', 'Falling'],
-          ['DDoS', '210', '+1%', '$5,600', 'Stable'],
-          ['Credential Stuffing', '430', '+9%', '$3,700', 'Rising'],
-        ];
+       
 
         pdf.setFont('helvetica', 'normal');
         threatData.forEach((row, idx) => {
@@ -263,7 +260,7 @@ const DashboardPDFExport = () => {
             if (cell && typeof cell === 'string') {
               pdf.text(cell, xPos + 2, yPosition + 1);
             }
-            xPos += colWidths[i];
+            xPos += colWidths[i] || 28;
           });
           
           // Subtle row separator
