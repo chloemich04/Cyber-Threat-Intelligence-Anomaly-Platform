@@ -238,11 +238,11 @@ const USHeatmap = () => {
                             }
                             setLoadingState(true);
                             fetch(`http://127.0.0.1:8000/api/heatmap/state/${code}/`)
-                              .then(res => {
-                                if (!res.ok) throw new Error(`Status ${res.status}`);
-                                return res.json();
-                              })
-                              .then(detail => {
+                                .then(res => {
+                                  if (!res.ok) throw new Error(`Status ${res.status}`);
+                                  return res.json();
+                                })
+                                .then(detail => {
                                 // Expect detail to include region_name or similar; normalize
                                 const normalized = {
                                   name: detail.region_name || stateName,
@@ -253,11 +253,11 @@ const USHeatmap = () => {
                                 setData(prev => ({ ...prev, [normalized.name]: { ...(prev[normalized.name] || {}), ...detail } }));
                                 setSelectedState(normalized);
                               })
-                              .catch(err => {
-                                console.error('Error fetching state detail:', err);
-                                // fallback to simple selection
-                                setSelectedState({ name: stateName, count: count });
-                              })
+                                .catch(err => {
+                                  console.error('Error fetching state detail:', err);
+                                  // fallback to simple selection
+                                  setSelectedState({ name: stateName, count: count });
+                                })
               .finally(() => setLoadingState(false));
               }
             } style={{

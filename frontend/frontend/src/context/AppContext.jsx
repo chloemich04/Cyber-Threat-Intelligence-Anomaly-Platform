@@ -189,16 +189,17 @@ export const AppProvider = ({ children }) => {
       dispatch({ type: ActionTypes.UPDATE_INSIGHTS, payload: insights });
     }, []),
 
-    // reloadInsights used to dynamically import a legacy insights loader. Insights are
-    // now derived directly from the canonical heatmap aggregation (heatmapLoaded event).
-    // Keep a safe no-op implementation so callers don't throw if they attempt to
-    // trigger a reload; it simply returns null and logs a diagnostic message.
+    // reloadInsights is intentionally a no-op since insights are now derived from
+    // the heatmapLoaded event (canonical aggregation). This preserves the API
+    // shape for any callers but avoids dynamic imports or fallback loaders.
     reloadInsights: useCallback(async ({ force = false } = {}) => {
       try {
-        try { console.debug('reloadInsights: disabled — insights are derived from heatmap events.'); } catch (e) {}
+        // keep caller semantics deterministic
+        actions.setLoading(false);
+        console.debug('reloadInsights called (no-op) - legacy insights loader removed');
         return null;
       } catch (e) {
-        // defensive: ensure the function always resolves to null on error
+        actions.setLoading(false);
         return null;
       }
     }, []),
@@ -317,28 +318,6 @@ export const AppProvider = ({ children }) => {
               averageLoss: null, // requires impact/loss data upstream (not available in heatmap)
               exposureScore: exposureScore,
               kevActiveExploits: totalExploits || 0,
-              // Exploit rate: raw percent and a smoothed Laplace estimate for small counts
-              exploitRatePercent: (function() {
-                try {
-                  if (!totalIncidents) return null;
-                  return Math.round(((totalExploits || 0) / totalIncidents) * 100);
-                } catch (e) { return null; }
-              })(),
-              exploitRateSmoothed: (function() {
-                try {
-                  if (!totalIncidents) return null;
-                  return Math.round((((totalExploits || 0) + 1) / (totalIncidents + 2)) * 100);
-                } catch (e) { return null; }
-              })(),
-              // Telemetry coverage heuristic: low/medium/high
-              telemetryCoverage: (function() {
-                try {
-                  if (!totalIncidents) return 'none';
-                  if (totalIncidents < 50) return 'low';
-                  if (totalIncidents < 500) return 'medium';
-                  return 'high';
-                } catch (e) { return 'none'; }
-              })(),
               // Simpler KPIs derived from national aggregation
               // Top-5 concentration: percent of national incidents occurring in the top 5 states
               top5ConcentrationPercent: (function() {
@@ -362,46 +341,6 @@ export const AppProvider = ({ children }) => {
               // Store the weighted average CVSS used in exposure computations so the UI
               // can show it or make display decisions (e.g., whether CVSS data exists).
               weightedAvgCvss: weightedAvgCvss,
-              // Percent critical CVEs (estimated): use per-state avg_cvss to estimate P(CVSS>=9)
-              percentCritical: (function() {
-                try {
-                  if (!totalIncidents) return null;
-                  const sd = 1.5; // heuristic standard deviation for CVSS within a state
-                  // erf-based normal CDF
-                  function erf(x) {
-                    // Abramowitz and Stegun approximation
-                    const sign = x >= 0 ? 1 : -1;
-                    x = Math.abs(x);
-                    const a1 = 0.254829592;
-                    const a2 = -0.284496736;
-                    const a3 = 1.421413741;
-                    const a4 = -1.453152027;
-                    const a5 = 1.061405429;
-                    const p = 0.3275911;
-                    const t = 1 / (1 + p * x);
-                    const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-                    return sign * y;
-                  }
-                  function normalCdf(x, mean, sdLocal) {
-                    return 0.5 * (1 + erf((x - mean) / (Math.SQRT2 * sdLocal)));
-                  }
-
-                  // Sum weighted state probabilities
-                  let weightedProbSum = 0;
-                  let weightTotal = 0;
-                  for (const it of items) {
-                    if (it.avg_cvss == null || (it.total_cves || 0) === 0) continue;
-                    const stateMean = it.avg_cvss;
-                    const pCritical = 1 - normalCdf(9, stateMean, sd);
-                    const w = it.total_cves || 0;
-                    weightedProbSum += pCritical * w;
-                    weightTotal += w;
-                  }
-                  if (!weightTotal) return null;
-                  const overallProb = weightedProbSum / weightTotal;
-                  return Math.round(overallProb * 100);
-                } catch (e) { return null; }
-              })(),
             };
             console.debug('AppContext: computed metrics from heatmap:', metricsPayload);
             actions.setMetrics(metricsPayload);

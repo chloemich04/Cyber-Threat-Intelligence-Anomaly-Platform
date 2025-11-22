@@ -155,14 +155,12 @@ const DashboardPDFExport = () => {
 
   // Metrics in cards
   // Use metrics from application context so PDF values match the dashboard.
-  const metricsData = metrics || {};
+              const metricsData = metrics || {};
               const metrics = [
                 { label: 'Total Cyber Incidents', value: (metricsData.totalIncidents != null) ? String(metricsData.totalIncidents) : '—' },
                 // Average loss is not available from heatmap; keep placeholder
                 { label: 'Average Loss / Incident', value: (metricsData.averageLoss != null) ? String(metricsData.averageLoss) : '—' },
                 { label: 'Exposure Score (0-100)', value: (metricsData.exposureScore != null) ? String(metricsData.exposureScore) : '—' },
-                { label: 'Exploit Rate (%)', value: (metricsData.exploitRatePercent != null) ? `${String(metricsData.exploitRatePercent)}%` : '—' },
-                { label: '% Critical CVEs (CVSS ≥ 9)', value: (metricsData.percentCritical != null) ? `${String(metricsData.percentCritical)}%` : '—' },
               ];
 
         metrics.forEach((metric, idx) => {
@@ -244,15 +242,7 @@ const DashboardPDFExport = () => {
         
         yPosition += 8;
 
-        // Table data with modern styling
-        // Sample threat summary rows (Avg Loss removed)
-        const threatData = [
-          ['Phishing', '1,245', '+12%', 'Rising'],
-          ['Ransomware', '530', '+4%', 'Stable'],
-          ['Malware', '890', '-6%', 'Falling'],
-          ['DDoS', '210', '+1%', 'Stable'],
-          ['Credential Stuffing', '430', '+9%', 'Rising'],
-        ];
+       
 
         pdf.setFont('helvetica', 'normal');
         threatData.forEach((row, idx) => {
