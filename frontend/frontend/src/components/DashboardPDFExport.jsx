@@ -156,16 +156,16 @@ const DashboardPDFExport = () => {
   // Metrics in cards
   // Use metrics from application context so PDF values match the dashboard.
   const metricsData = metrics || {};
-              const metrics = [
+              const metricsArray = [
                 { label: 'Total Cyber Incidents', value: (metricsData.totalIncidents != null) ? String(metricsData.totalIncidents) : '—' },
-                // Average loss is not available from heatmap; keep placeholder
-                { label: 'Average Loss / Incident', value: (metricsData.averageLoss != null) ? String(metricsData.averageLoss) : '—' },
                 { label: 'Exposure Score (0-100)', value: (metricsData.exposureScore != null) ? String(metricsData.exposureScore) : '—' },
                 { label: 'Exploit Rate (%)', value: (metricsData.exploitRatePercent != null) ? `${String(metricsData.exploitRatePercent)}%` : '—' },
                 { label: '% Critical CVEs (CVSS ≥ 9)', value: (metricsData.percentCritical != null) ? `${String(metricsData.percentCritical)}%` : '—' },
+                { label: 'Top-5 State Concentration (%)', value: (metricsData.top5ConcentrationPercent != null) ? `${String(metricsData.top5ConcentrationPercent)}%` : '—' },
+                { label: 'Active States (%)', value: (metricsData.activeStatesPercent != null) ? `${String(metricsData.activeStatesPercent)}%` : '—' },
               ];
 
-        metrics.forEach((metric, idx) => {
+        metricsArray.forEach((metric, idx) => {
           if (idx % 2 === 0 && idx > 0) {
             yPosition += 22;
             checkPageBreak(22);

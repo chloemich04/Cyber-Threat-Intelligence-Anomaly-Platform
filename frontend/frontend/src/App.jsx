@@ -86,6 +86,8 @@ export default function App(){
                   <div className="kpi"><div className="label">Exposure Score (0–100)</div><div className="value">{metrics && metrics.exposureScore != null ? metrics.exposureScore : '—'}</div></div>
                   <div className="kpi"><div className="label">Exploit Rate (%)</div><div className="value">{metrics && metrics.exploitRatePercent != null ? `${metrics.exploitRatePercent}%` : '—'}</div></div>
                   <div className="kpi"><div className="label">% Critical CVEs (CVSS ≥ 9)</div><div className="value">{metrics && metrics.percentCritical != null ? `${metrics.percentCritical}%` : '—'}</div></div>
+                  <div className="kpi"><div className="label">Top-5 State Concentration (%)ℹ️</div><div className="value">{metrics && metrics.top5ConcentrationPercent != null ? `${metrics.top5ConcentrationPercent}%` : '—'}</div></div>
+                  <div className="kpi"><div className="label">Active States (%)ℹ️</div><div className="value">{metrics && metrics.activeStatesPercent != null ? `${metrics.activeStatesPercent}%` : '—'}</div></div>
                 </>
               )}
             </div>
