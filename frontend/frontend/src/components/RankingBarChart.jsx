@@ -45,7 +45,6 @@ const RankingBarChart = () => {
                 <Tooltip
                    formatter={(value, name) => {
                        if (name === "cve_count") return [`${value} CVEs`, "CVE Count"];
-                       if (name === "avg_epss") return [value.toFixed(4), "Avg EPSS"];
                        }}
                    labelFormatter={(label) => {
                        const entry = data.find((d) => d.state === label);

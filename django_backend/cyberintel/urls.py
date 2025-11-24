@@ -13,5 +13,6 @@ urlpatterns = [
     path('forecast/charts/', forecast_chart_data, name='forecast-charts'),
     path('heatmap_data/', views.heatmap_data, name='heatmap-data'),
     path('ranking_data/', views.ranking_bar_chart_data, name='ranking-data'),
+    path('epss_chart/', views.epss_chart_data, name='epss-chart'),
 
 ]
