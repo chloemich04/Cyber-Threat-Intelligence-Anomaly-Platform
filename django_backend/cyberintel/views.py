@@ -14,7 +14,7 @@ from django.db import connection
 from django.db.models import Count, Sum, Avg
 from django.core.cache import cache
 
-from .models import CveCountsByRegionEpss, CveCountsByRegion, NvdDataLimited, CweSoftwareLimited
+from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion, NvdDataLimited, CweSoftwareLimited
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -191,6 +191,37 @@ def epss_chart_data(request):
         entry["rank_epss"] = idx
 
     return Response(aggregated)
+
+@api_view(['GET'])
+def isp_chart_data(request):
+    cached_data = cache.get('internet_chart_data')
+    if cached_data:
+        return Response(cached_data)
+
+    qs = IspCountsByRegion.objects.all()
+
+    aggregated = {}
+    for row in qs:
+        state = row.region_code
+        if state not in aggregated:
+            aggregated[state] = {
+                "region_code": state,
+                "total_count": 0,
+                "isps": []
+            }
+        aggregated[state]["total_count"] += row.cnt
+        aggregated[state]["isps"].append({
+            "isp": row.isp,
+            "cnt": row.cnt,
+            "rank_per_state_isp": row.rank_per_state_isp
+        })
+    result = list(aggregated.values())
+
+    result.sort(key=lambda k: k['total_count'], reverse=True)
+
+    return Response(result)
+
+
 
 @api_view(['POST'])
 def forecast_threats_api(request):

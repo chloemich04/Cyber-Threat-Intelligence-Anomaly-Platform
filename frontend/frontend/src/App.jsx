@@ -10,6 +10,7 @@ import SeverityDonutChart from "./components/SeverityDonutChart"
 import RankingBarChart from "./components/RankingBarChart"
 import USHeatmap from './components/USHeatmap';
 import StateEpssChart from './components/StateEpssChart'
+import InternetProviderChart from './components/InternetProviderChart'
 import InfoModal from './components/InfoModal';
 import { useNavigation, useFilters, useMetrics, useThreatData, useInsights } from './context/AppContext';
 
@@ -176,7 +177,7 @@ export default function App(){
               </InfoModal>
             </section>
 
-            {/* Charts Section - Historical Data (Not AI Predictions) */}
+        {/* Charts Section - Historical Data (Not AI Predictions) */}
             <section className="panel charts-full-width">
               <h3>Threat Analytics</h3>
               <div className="subtitle" style={{ marginBottom: '1rem', color: 'var(--muted)' }}>
@@ -214,10 +215,13 @@ export default function App(){
                     </div>
                   </div>
                 </div>
-
-                <div className="chart-box" aria-label="Loss amount by sector bar chart" data-dashboard-chart-id="top-threats">
-                  <LossBySectorBarChart />
+              <div className="chart-content">
+                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                  <InternetProviderChart />
                 </div>
+              </div>
+            </div>
+
 
                 <div className="chart-box" aria-label="Top threat types ranked" data-dashboard-chart-id="vulnerable-tech">
                   <div className="chart-header">
@@ -241,7 +245,7 @@ export default function App(){
                         ℹ️
                       </button>
                     </div>
-                  </div>
+                  
                   <div className="chart-content">
                     <div className="chart-container" style={{ height: '360px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
                       <div style={{ height: '100%', width: '100%' }}>

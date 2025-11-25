@@ -43,6 +43,18 @@ class CveCountsByRegionEpss(models.Model):
         #managed = False
         db_table = 'cve_counts_by_region_epss'
 
+class IspCountsByRegion(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    region_code = models.TextField(blank=True, null=True)
+    isp = models.TextField(blank=True, null=True)
+    cnt = models.BigIntegerField()
+    rank_per_state_isp = models.IntegerField()
+
+    class Meta:
+        #managed = False
+        db_table = 'isp_counts_by_region'
+
+
 
 class NvdDataLimited(models.Model):
     # The underlying table has an `id` column; declare it as primary key here
