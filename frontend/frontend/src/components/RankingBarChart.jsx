@@ -320,7 +320,9 @@ const RankingBarChart = ({ topN = 10 }) => {
                                 <Bar
                                     dataKey="cve_count"
                                     radius={[6, 6, 0, 0]}
-                                    isAnimationActive={false}
+                                    isAnimationActive={true}
+                                    animationDuration={1000}
+                                    animationEasing="ease-in-out"
                                     barSize={barSize}
                                 >
                                     {topData.map((entry, i) => {

@@ -342,7 +342,9 @@ const StateEpssChart = ({ topN = 10 }) => {
               <Bar
                 dataKey="avg_epss"
                 radius={[6, 6, 0, 0]}
-                isAnimationActive={false}
+                isAnimationActive={true}
+                animationDuration={1000}
+                animationEasing="ease-in-out"
                 barSize={barSize}
               >
                 {topData.map((entry, i) => {

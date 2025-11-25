@@ -4,9 +4,6 @@ import AboutUs from './components/AboutUs';
 import Contact from './components/Contact';
 import ThreatIntelligence from './components/ThreatIntelligence';
 import DashboardPDFExport from './components/DashboardPDFExport';
-import LossBySectorBarChart from './components/LossBySectorBarChart';
-import ThreatList from "./components/ThreatList"
-import SeverityDonutChart from "./components/SeverityDonutChart"
 import RankingBarChart from "./components/RankingBarChart"
 import USHeatmap from './components/USHeatmap';
 import StateEpssChart from './components/StateEpssChart'
@@ -32,7 +29,9 @@ export default function App(){
   const [threats, setThreats] = useState([]);
   const [showHeatmapInfo, setShowHeatmapInfo] = useState(false);
   const [showEpssInfo, setShowEpssInfo] = useState(false);
+  const [showISPInfo, setShowISPInfo] = useState(false);
   const [showRankingsInfo, setShowRankingsInfo] = useState(false);
+
 
 
 
@@ -209,24 +208,47 @@ export default function App(){
                   </div>
                   <div className="chart-content">
                     <div className="chart-container" style={{ height: '280px', width: '100%' }}>
-                      <div style={{ height: '100%', width: '100%' }}>
+                      <div style={{ height: '340px', width: '100%' }}>
                         <StateEpssChart />
                       </div>
                     </div>
                   </div>
                 </div>
-              <div className="chart-content">
-                <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  <InternetProviderChart />
-                </div>
-              </div>
-            </div>
 
-
-                <div className="chart-box" aria-label="Top threat types ranked" data-dashboard-chart-id="vulnerable-tech">
+                <div className="chart-box" aria-label="IPS" data-dashboard-chart-id="internet-provider">
                   <div className="chart-header">
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <h3 className="chart-title" style={{ margin: 0 }}>Rankings</h3>
+                      <h3 className="chart-title" style={{ margin: 0 }}>Internet Provider Rankings </h3>
+                      <button
+                        type="button"
+                        title="What the ISP chart shows"
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 12,
+                          color: 'var(--muted)',
+                          cursor: 'pointer',
+                          background: 'transparent',
+                          border: 'none',
+                          padding: 0,
+                        }}
+                        aria-label="ISP info"
+                        onClick={() => setShowISPInfo(true)}
+                      >
+                        ℹ️
+                      </button>
+                    </div>
+                  </div>
+                  <div className="chart-content">
+                    <div className="chart-container" style={{ height: '280px', width: '100%' }}>
+                      <InternetProviderChart/>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="chart-box" aria-label="Top cves ranked" data-dashboard-chart-id="vulnerable-tech">
+                  <div className="chart-header">
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <h3 className="chart-title" style={{ margin: 0 }}>CVE Rankings</h3>
                       <button
                         type="button"
                         title="What the rankings chart shows"
@@ -245,9 +267,9 @@ export default function App(){
                         ℹ️
                       </button>
                     </div>
-                  
+                  </div>
                   <div className="chart-content">
-                    <div className="chart-container" style={{ height: '360px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
+                    <div className="chart-container" style={{ height: '360px', width: '100%' }}>
                       <div style={{ height: '100%', width: '100%' }}>
                         <RankingBarChart />
                       </div>
@@ -302,6 +324,22 @@ export default function App(){
                       </ul>
                       <p style={{ marginTop: 8 }}>
                         Tip: focus on vulnerabilities with high EPSS scores for prioritizing mitigation efforts.
+                      </p>
+                    
+                  </InfoModal>
+
+              <InfoModal
+                    open={showISPInfo} onClose={() => setShowISPInfo(false)} title="Internet Provider Rankings">
+                      <p>
+                        The Internet Provider Rankings chart displays the top states by total cyber incident count, or when a state is selected, shows the top Internet Service Providers (ISPs) within that state.
+                      </p>
+                      <ul style={{ marginTop: 8 }}>
+                        <li><strong>What it shows:</strong> Top 10 states by incident volume (default view), or top ISPs for a selected state with their incident counts.</li>
+                        <li><strong>How to use:</strong> Click a state on the heatmap to drill down into ISP-level data. The chart dynamically switches between state-level and ISP-level views.</li>
+                        <li><strong>Limitations:</strong> ISP data is based on network attribution and may not reflect the actual victim organization. Some incidents may be attributed to hosting providers or VPN services rather than end-user ISPs.</li>
+                      </ul>
+                      <p style={{ marginTop: 8 }}>
+                        This visualization helps identify geographic concentration of threats and which network infrastructure providers are most affected by cyber incidents.
                       </p>
                     
                   </InfoModal>
