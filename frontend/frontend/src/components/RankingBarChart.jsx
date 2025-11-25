@@ -4,6 +4,18 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 // Module-level cache to avoid re-fetching ranking data across mounts/unmounts
 let _rankingDataCache = null;
 let _rankingDataFetched = false;
+let _rankingDataPromise = null;
+
+// Try to restore cache from sessionStorage (survives HMR during dev)
+try {
+  const cached = sessionStorage.getItem('_rankingChartCache');
+  if (cached) {
+    _rankingDataCache = JSON.parse(cached);
+    _rankingDataFetched = true;
+  }
+} catch (e) {
+  // ignore parse errors
+}
 
 // Colors for bars (background fill and border) provided by design
 const BAR_BACKGROUND_COLORS = [
@@ -118,7 +130,6 @@ const RankingBarChart = ({ topN = 10 }) => {
 
     // Avoid refetching repeatedly if the component is unmounted/remounted (e.g. dev StrictMode or
     // parent re-renders). Keep a session-level flag so we only fetch once per page load.
-    const fetchedRef = useRef(false);
     useEffect(() => {
         if (_rankingDataFetched && _rankingDataCache) {
             // Use cached data from earlier fetch in this page session
@@ -126,18 +137,30 @@ const RankingBarChart = ({ topN = 10 }) => {
             return;
         }
 
-        if (fetchedRef.current) return;
-        fetchedRef.current = true;
+        // If a fetch is already in-flight, attach to it
+        if (_rankingDataPromise) {
+            _rankingDataPromise.then((normalized) => setData(normalizeRankingData(normalized))).catch(() => {});
+            return;
+        }
 
-        fetch("http://127.0.0.1:8000/api/ranking_data/")
+        _rankingDataPromise = fetch("http://127.0.0.1:8000/api/ranking_data/")
             .then((res) => res.json())
             .then((raw) => {
                 const normalized = normalizeRankingData(raw);
                 _rankingDataFetched = true;
                 _rankingDataCache = normalized;
-                setData(normalized);
+                _rankingDataPromise = null;
+                // Persist to sessionStorage
+                try {
+                    sessionStorage.setItem('_rankingChartCache', JSON.stringify(normalized));
+                } catch (e) {}
+                return normalized;
             })
-            .catch((err) => console.error("Error fetching ranking bar chart data:", err));
+            .then((normalized) => setData(normalized))
+            .catch((err) => {
+                _rankingDataPromise = null;
+                console.error("Error fetching ranking bar chart data:", err);
+            });
     }, []);
 
     // Listen for state selections from the map; highlight or add the state to the chart

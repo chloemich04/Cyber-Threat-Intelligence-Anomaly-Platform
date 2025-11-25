@@ -30,6 +30,7 @@ export default function App(){
 
   const [threats, setThreats] = useState([]);
   const [showHeatmapInfo, setShowHeatmapInfo] = useState(false);
+  const [showEpssInfo, setShowEpssInfo] = useState(false);
   const [showRankingsInfo, setShowRankingsInfo] = useState(false);
 
 
@@ -184,12 +185,32 @@ export default function App(){
               <div className="charts">
                 <div className="chart-box" aria-label="Incident severity distribution" data-dashboard-chart-id="incident-severity">
                   <div className="chart-header">
-                    <h3 className="chart-title">Incident Severity Distribution</h3>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <h3 className="chart-title" style={{ margin: 0 }}>Exploit Probability Score (EPSS)</h3>
+                      <button
+                        type="button"
+                        title="What the EPSS chart shows"
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 12,
+                          color: 'var(--muted)',
+                          cursor: 'pointer',
+                          background: 'transparent',
+                          border: 'none',
+                          padding: 0,
+                        }}
+                        aria-label="EPSS info"
+                        onClick={() => setShowEpssInfo(true)}
+                      >
+                        ℹ️
+                      </button>
+                    </div>
                   </div>
                   <div className="chart-content">
-                      <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                    <div className="chart-container" style={{ height: '280px', width: '100%' }}>
+                      <div style={{ height: '100%', width: '100%' }}>
                         <StateEpssChart />
-                        {/*Donut Chart Coming Soon*/}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -264,6 +285,25 @@ export default function App(){
             </aside>
 </main>
 
+            <InfoModal
+                    open={showEpssInfo} onClose={() => setShowEpssInfo(false)} title="Exploit Prediction Scoring System (EPSS)">
+                      <p>
+                        The EPSS chart shows the distribution of Exploit Prediction Scoring System (EPSS) scores for known vulnerabilities in the dataset.
+                        EPSS scores estimate the likelihood of exploitation based on historical data and characteristics of the vulnerabilities.
+                      </p>
+                      <ul style={{ marginTop: 8 }}>
+                        <li><strong>What it shows:</strong> distribution of EPSS scores across observed vulnerabilities.</li>
+                        <li><strong>How to use:</strong> use the chart to understand the prevalence of high-risk vulnerabilities in the dataset.</li>
+                        <li><strong>Limitations:</strong> EPSS is a probabilistic model and should be used alongside other risk assessment methods.</li>
+                      </ul>
+                      <p style={{ marginTop: 8 }}>
+                        Tip: focus on vulnerabilities with high EPSS scores for prioritizing mitigation efforts.
+                      </p>
+                    
+                  </InfoModal>
+
+            {/* Rankings Info Modal */}
+
             <InfoModal open={showRankingsInfo} onClose={() => setShowRankingsInfo(false)} title="Rankings">
               <p>
                 The Rankings chart shows the top items (threat types, actors, or technologies) ordered by the selected metric (frequency, impact or score).
@@ -304,7 +344,7 @@ export default function App(){
               <p style={{ marginTop: 8 }}><em>Interpretation:</em> higher values indicate higher combined severity and volume. Use the score as a directional prioritization aid alongside other KPIs and map context; it is heuristic and explainable, not a definitive risk measurement.</p>
             </InfoModal>
 
-            <footer>© 2025 CTI Dashboard</footer>
+            <footer>© 2025 Cyber Threat Intelligence</footer>
           
           </>
         );

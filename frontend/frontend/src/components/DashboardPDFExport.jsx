@@ -411,7 +411,7 @@ const DashboardPDFExport = () => {
       pdf.setFontSize(8);
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('© 2025 CTI Dashboard — Historical Threat Analytics', pageWidth / 2, pageHeight - 5, { align: 'center' });
+      pdf.text('© 2025 Cyber Threat Intelligence', pageWidth / 2, pageHeight - 5, { align: 'center' });
 
       // Save the PDF
       const filename = `dashboard-report-${new Date().toISOString().split('T')[0]}.pdf`;

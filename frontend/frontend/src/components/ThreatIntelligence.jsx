@@ -374,7 +374,7 @@ export default function ThreatIntelligence() {
         </section>
       </main>
 
-      <footer>© 2025 CTI Dashboard</footer>
+      <footer>© 2025 Cyber Threat Intelligence</footer>
     </>
   );
 }
