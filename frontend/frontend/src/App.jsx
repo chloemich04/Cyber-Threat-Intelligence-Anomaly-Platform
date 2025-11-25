@@ -10,6 +10,7 @@ import SeverityDonutChart from "./components/SeverityDonutChart"
 import RankingBarChart from "./components/RankingBarChart"
 import USHeatmap from './components/USHeatmap';
 import StateEpssChart from './components/StateEpssChart'
+import InternetProviderChart from './components/InternetProviderChart'
 import { useNavigation, useFilters, useMetrics, useThreatData, useInsights } from './context/AppContext';
 
 export default function App(){
@@ -106,18 +107,16 @@ export default function App(){
           <div className="charts">
             <div className="chart-box" aria-label="Incident severity distribution" data-dashboard-chart-id="incident-severity">
               <div className="chart-header">
-                <h3 className="chart-title">Incident Severity Distribution</h3>
+                <h3 className="chart-title">Internet Providers</h3>
               </div>
               <div className="chart-content">
                 <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
-                  🍩 Donut Chart Coming Soon
+                  {/*🍩 Donut Chart Coming Soon*/}
+                  <InternetProviderChart />
                 </div>
               </div>
             </div>
 
-            <div className="chart-box" aria-label="Loss amount by sector bar chart">
-              <LossBySectorBarChart />
-            </div>
 
             <div className="chart-box" aria-label="Incident severity distribution">
               <div className="chart-header">
