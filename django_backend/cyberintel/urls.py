@@ -15,5 +15,6 @@ urlpatterns = [
     path('ranking_data/', views.ranking_bar_chart_data, name='ranking-data'),
     path('epss_chart/', views.epss_chart_data, name='epss-chart'),
     path('internet_chart/', views.isp_chart_data, name='internet-chart'),
+    path('epss_chart/epss_incidents/<str:region_code>/', views.state_epss_incidents, name='epss-incidents'),
 
 ]
