@@ -16,7 +16,7 @@ const Navigation = () => {
       <div className="nav-container">
         {/* Logo/Brand */}
         <div className="nav-brand">
-          <span className="brand-text">CTI Dashboard</span>
+          <span className="brand-text">CTI</span>
         </div>
 
         {/* Desktop Navigation */}

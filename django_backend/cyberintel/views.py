@@ -14,7 +14,7 @@ from django.db import connection
 from django.db.models import Count, Sum, Avg
 from django.core.cache import cache
 
-from .models import CveCountsByRegionEpss, CveCountsByRegion, NvdDataLimited, CweSoftwareLimited
+from .models import CveCountsByRegionEpss, CveCountsByRegion
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -166,6 +166,60 @@ def ranking_bar_chart_data(request):
         rank += 1
 
     return Response(ranked_data)
+
+@api_view(['GET'])
+def epss_chart_data(request):
+    cached_data = cache.get('epss_chart_data')
+    if cached_data:
+        return Response(cached_data)
+
+    aggregated = (
+        CveCountsByRegionEpss.objects
+        .values("region_code")
+        .annotate(
+            total_cve_count=Sum("cve_count"),
+            avg_epss=Avg("avg_epss"),
+            num_unique_cves=Count("cve_id", distinct=True)
+        )
+        .order_by("avg_epss")
+    )
+
+    aggregated = list(aggregated)
+
+    # Add computed rank based on avg_epss
+    for idx, entry in enumerate(aggregated, start=1):
+        entry["rank_epss"] = idx
+
+    return Response(aggregated)
+
+@api_view(['GET'])
+def isp_chart_data(request):
+    cached_data = cache.get('internet_chart_data')
+    if cached_data:
+        return Response(cached_data)
+
+    qs = IspCountsByRegion.objects.all()
+
+    aggregated = {}
+    for row in qs:
+        state = row.region_code
+        if state not in aggregated:
+            aggregated[state] = {
+                "region_code": state,
+                "total_count": 0,
+                "isps": []
+            }
+        aggregated[state]["total_count"] += row.cnt
+        aggregated[state]["isps"].append({
+            "isp": row.isp,
+            "cnt": row.cnt,
+            "rank_per_state_isp": row.rank_per_state_isp
+        })
+    result = list(aggregated.values())
+
+    result.sort(key=lambda k: k['total_count'], reverse=True)
+
+    return Response(result)
 
 
 

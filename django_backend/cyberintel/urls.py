@@ -14,5 +14,7 @@ urlpatterns = [
     path('heatmap_data/', views.heatmap_data, name='heatmap-data'),
     path('heatmap/state/<str:region_code>/', views.heatmap_state_detail, name='heatmap-state-detail'),
     path('ranking_data/', views.ranking_bar_chart_data, name='ranking-data'),
+    path('epss_chart/', views.epss_chart_data, name='epss-chart'),
+    path('internet_chart/', views.isp_chart_data, name='internet-chart'),
 
 ]

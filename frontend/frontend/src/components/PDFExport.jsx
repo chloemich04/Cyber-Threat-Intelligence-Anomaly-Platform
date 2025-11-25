@@ -590,7 +590,7 @@ const PDFExport = ({ forecastData }) => {
       pdf.setFontSize(8);
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('© 2025 CTI Dashboard — AI-Powered Threat Intelligence', pageWidth / 2, pageHeight - 5, { align: 'center' });
+      pdf.text('© 2025 Cyber Threat Intelligence', pageWidth / 2, pageHeight - 5, { align: 'center' });
 
       // Save the PDF
       const filename = `threat-intelligence-report-${new Date().toISOString().split('T')[0]}.pdf`;
