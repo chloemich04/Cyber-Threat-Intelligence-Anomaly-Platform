@@ -167,7 +167,30 @@ def ranking_bar_chart_data(request):
 
     return Response(ranked_data)
 
+@api_view(['GET'])
+def epss_chart_data(request):
+    cached_data = cache.get('epss_chart_data')
+    if cached_data:
+        return Response(cached_data)
 
+    aggregated = (
+        CveCountsByRegionEpss.objects
+        .values("region_code")
+        .annotate(
+            total_cve_count=Sum("cve_count"),
+            avg_epss=Avg("avg_epss"),
+            num_unique_cves=Count("cve_id", distinct=True)
+        )
+        .order_by("avg_epss")
+    )
+
+    aggregated = list(aggregated)
+
+    # Add computed rank based on avg_epss
+    for idx, entry in enumerate(aggregated, start=1):
+        entry["rank_epss"] = idx
+
+    return Response(aggregated)
 
 @api_view(['POST'])
 def forecast_threats_api(request):

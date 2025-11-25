@@ -9,6 +9,7 @@ import ThreatList from "./components/ThreatList"
 import SeverityDonutChart from "./components/SeverityDonutChart"
 import RankingBarChart from "./components/RankingBarChart"
 import USHeatmap from './components/USHeatmap';
+import StateEpssChart from './components/StateEpssChart'
 import InfoModal from './components/InfoModal';
 import { useNavigation, useFilters, useMetrics, useThreatData, useInsights } from './context/AppContext';
 
@@ -186,8 +187,9 @@ export default function App(){
                     <h3 className="chart-title">Incident Severity Distribution</h3>
                   </div>
                   <div className="chart-content">
-                    <div className="chart-container" style={{ height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
-                      🍩 Donut Chart Coming Soon
+                      <div className="chart-container" style={{height: '280px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)'}}>
+                        <StateEpssChart />
+                        {/*Donut Chart Coming Soon*/}
                     </div>
                   </div>
                 </div>
