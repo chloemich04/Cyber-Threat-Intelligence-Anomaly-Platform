@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Label, Cell } from 'recharts';
+import { useSelectedState } from '../context/SelectedStateContext';
 
 // Module-level cache to avoid re-fetching ranking data across mounts/unmounts
 let _rankingDataCache = null;
@@ -19,17 +20,22 @@ try {
 
 // Colors for bars (background fill and border) provided by design
 const BAR_BACKGROUND_COLORS = [
-    '#b2e0fcff', 
-    '#3a6e90ff', 
-    '#022a43ff',
-   
+    '#9d00ffff', 
+    '#cc9ceaff', 
+    '#482563ff',
 ];
 
 const BAR_BORDER_COLORS = [
-    '#8eaec2ff',
-    '#487794ff',
-    '#0a334eff',
-   
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
+    '#1f2937',
 ];
 
 const panelStyle = {
@@ -47,9 +53,9 @@ const titleStyle = {
     marginBottom: 6
 };
 
-const titleTextStyle = { fontSize: 16, fontWeight: 600, color: '#dff6ff' };
+const titleTextStyle = { fontSize: 16, fontWeight: 600, color: '#e5e7eb' };
 
-const infoDotStyle = { background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: '2px 6px', fontSize: 12 };
+const infoDotStyle = { background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: '2px 6px', fontSize: 12, color: '#e5e7eb' };
 
 const customTooltipStyle = {
     background: '#111827',
@@ -78,10 +84,11 @@ function CustomTooltip({ active, payload, label }) {
     );
 }
 
-const RankingBarChart = ({ topN = 10 }) => {
+const RankingBarChart = ({ topN = 10, injectedData = null, exportMode = false }) => {
     const [data, setData] = useState([]);
     // highlightedState will be an object { name, code } when set
     const [highlightedState, setHighlightedState] = useState(null);
+    const { selectedState } = useSelectedState();
 
     // mapping of state display name -> two-letter code to normalize incoming data
     const STATE_NAME_TO_CODE = {
@@ -131,6 +138,19 @@ const RankingBarChart = ({ topN = 10 }) => {
     // Avoid refetching repeatedly if the component is unmounted/remounted (e.g. dev StrictMode or
     // parent re-renders). Keep a session-level flag so we only fetch once per page load.
     useEffect(() => {
+        // If injected data is provided (PDF export), use it
+        if (injectedData) {
+            try {
+                const normalized = normalizeRankingData(injectedData);
+                _rankingDataFetched = true;
+                _rankingDataCache = normalized;
+                setData(normalized);
+                return;
+            } catch (e) {
+                console.error('Error normalizing injected ranking data:', e);
+            }
+        }
+
         if (_rankingDataFetched && _rankingDataCache) {
             // Use cached data from earlier fetch in this page session
             setData(normalizeRankingData(_rankingDataCache));
@@ -143,6 +163,7 @@ const RankingBarChart = ({ topN = 10 }) => {
             return;
         }
 
+        _ranking_data_temp:
         _rankingDataPromise = fetch("http://127.0.0.1:8000/api/ranking_data/")
             .then((res) => res.json())
             .then((raw) => {
@@ -163,122 +184,75 @@ const RankingBarChart = ({ topN = 10 }) => {
             });
     }, []);
 
-    // Listen for state selections from the map; highlight or add the state to the chart
-    useEffect(() => {
-        function onStateSelected(e) {
-            const detail = e && e.detail ? e.detail : e;
-            const stateName = detail && (detail.name || detail.state || detail.region_name);
-            const code = detail && (detail.code || detail.region_code || null);
-            const total = detail && (detail.total_cves || detail.count || detail.total);
-            if (!stateName && !code) return;
-
-            // helper to match an entry by code first, then by name
-            const matchesEntry = (entry) => {
-                if (!entry) return false;
-                if (code && (entry.region_code === code || entry.code === code)) return true;
-                if (stateName && ((entry.state && entry.state === stateName) || (entry.region_name && entry.region_name === stateName))) return true;
-                return false;
-            };
-
-            // If we have cached ranking data, ensure the clicked state exists in it (or keep synthetic info)
-            if (_rankingDataCache && Array.isArray(_rankingDataCache)) {
-                const found = _rankingDataCache.find(item => matchesEntry(item));
-                if (!found) {
-                    // add a synthetic entry so it will be displayed/highlighted (don't mutate cache in place)
-                    const synthetic = { state: stateName || code, region_code: code || null, cve_count: (typeof total === 'number') ? total : 0, synthetic: true };
-                    // update component-local data so topData recomputes with this extra entry
-                    setData(prev => {
-                        // avoid adding duplicate synthetic entries
-                        if (prev.some(p => matchesEntry(p))) return prev;
-                        return [...prev, synthetic];
-                    });
-                }
-            } else {
-                // no cache yet: set a minimal data item so chart can show the highlighted state
-                setData(prev => {
-                    if (prev.some(p => matchesEntry(p))) return prev;
-                    const synthetic = { state: stateName || code, region_code: code || null, cve_count: (typeof total === 'number') ? total : 0, synthetic: true };
-                    return [...prev, synthetic];
-                });
-            }
-
-            setHighlightedState({ name: stateName, code });
-        }
-
-        window.addEventListener('stateSelected', onStateSelected);
-        return () => window.removeEventListener('stateSelected', onStateSelected);
-    }, []);
-
-    // Listen for a global clear event to remove highlighting and restore original data
-    useEffect(() => {
-        function onStateCleared() {
-            setHighlightedState(null);
-            if (_rankingDataCache) {
-                setData(_rankingDataCache);
-            }
-        }
-
-        window.addEventListener('stateCleared', onStateCleared);
-        return () => window.removeEventListener('stateCleared', onStateCleared);
-    }, []);
-
-    // Derive top N data sorted by cve_count descending
+    // Derive top N data sorted by cve_count descending from the full dataset
+    // (national top-N). If a state is selected, highlight it if it's in the
+    // top-N; otherwise replace the Nth entry with the selected state so it
+    // remains visible.
     const topData = useMemo(() => {
         if (!Array.isArray(data)) return [];
-        const sorted = [...data].sort((a, b) => (b.cve_count || 0) - (a.cve_count || 0));
+        const sortedFull = [...data].sort((a, b) => (b.cve_count || 0) - (a.cve_count || 0));
 
-        // base top N
-        const base = sorted.slice(0, topN).map((d, i) => ({ ...d, rank: d.rank_overall || i + 1 }));
+        const base = sortedFull.slice(0, topN).map((d, i) => ({ ...d, rank: d.rank_overall || i + 1 }));
 
-        // If a state is highlighted and it's not already in the base slice,
-        // replace the last bar in the top-N with the highlighted state so it remains visible.
-        if (highlightedState) {
-            const inBase = base.some(d => {
-                if (!d) return false;
-                if (highlightedState.code && (d.region_code === highlightedState.code || d.code === highlightedState.code)) return true;
-                return (d.state && d.state === highlightedState.name) || (d.region_name && d.region_name === highlightedState.name);
-            });
-            if (!inBase) {
-                // try to find the entry in the full sorted list by code or name
-                const found = sorted.find(d => {
-                    if (highlightedState.code && (d.region_code === highlightedState.code || d.code === highlightedState.code)) return true;
-                    return (d.state && d.state === highlightedState.name) || (d.region_name && d.region_name === highlightedState.name);
-                });
-                let entryToInsert = null;
-                if (found) {
-                    entryToInsert = { ...found, rank: found.rank_overall || (sorted.indexOf(found) + 1) };
-                } else {
-                    // fallback to any synthetic entry present in data by matching code/name
-                    const synthetic = data.find(d => {
-                        if (highlightedState.code && (d.region_code === highlightedState.code || d.code === highlightedState.code)) return true;
-                        return (d.state && d.state === highlightedState.name) || (d.region_name && d.region_name === highlightedState.name);
-                    });
-                    if (synthetic) entryToInsert = { ...synthetic, rank: synthetic.rank_overall || null };
-                    else entryToInsert = { state: highlightedState.name || highlightedState.code, region_code: highlightedState.code || null, cve_count: 0, rank: null };
-                }
+        // When exporting, ignore selected state to render the national top-N view
+        const active = exportMode ? null : (highlightedState || selectedState);
+        if (!active) return base;
 
-                if (base.length >= topN) {
-                    // replace the last element
-                    base[base.length - 1] = entryToInsert;
-                } else {
-                    // if for some reason we have fewer than topN entries, just append
-                    base.push(entryToInsert);
-                }
-            }
+        const selCode = active.code ? String(active.code).toUpperCase() : null;
+        const selName = active.name ? String(active.name).trim().toLowerCase() : null;
+
+        const inBase = base.some(d => {
+            if (!d) return false;
+            const codes = [d.region_code, d.code, d.regionCode, d.region];
+            for (const v of codes) if (v && selCode && String(v).toUpperCase() === selCode) return true;
+            const names = [d.state, d.name, d.region_name, d.regionName];
+            for (const v of names) if (v && selName && String(v).trim().toLowerCase() === selName) return true;
+            return false;
+        });
+
+        if (inBase) return base;
+
+        // find the entry in the full sorted list
+        const found = sortedFull.find(d => {
+            const codes = [d.region_code, d.code, d.regionCode, d.region];
+            for (const v of codes) if (v && selCode && String(v).toUpperCase() === selCode) return true;
+            const names = [d.state, d.name, d.region_name, d.regionName];
+            for (const v of names) if (v && selName && String(v).trim().toLowerCase() === selName) return true;
+            return false;
+        });
+
+        let entryToInsert = null;
+        if (found) entryToInsert = { ...found, rank: found.rank_overall || (sortedFull.indexOf(found) + 1) };
+        else {
+            // synthetic fallback
+            entryToInsert = { state: active.name || active.code, region_code: active.code || null, cve_count: 0, rank: null };
         }
 
+        if (base.length >= topN) base[base.length - 1] = entryToInsert;
+        else base.push(entryToInsert);
+
         return base;
-    }, [data, topN, highlightedState]);
+    }, [data, topN, highlightedState, selectedState]);
 
-        const containerHeight = '100%';
+    // Notify PDF exporter when this chart has data ready for capture
+    useEffect(() => {
+        if (Array.isArray(topData) && topData.length > 0) {
+            try {
+                console.debug && console.debug('[RankingBarChart] topData ready length=', topData.length);
+                window.dispatchEvent(new CustomEvent('dashboardPDF:chartReady', { detail: { id: 'vulnerable-tech' } }));
+            } catch (e) {}
+        }
+    }, [topData]);
 
-        // responsive bar size depending on number of items (based on available width heuristic)
-        const barSize = Math.max(14, Math.min(48, Math.floor(300 / Math.max(1, topData.length)))) - 5;
+    const containerHeight = '100%';
+
+    // responsive bar size depending on number of items (based on available width heuristic)
+    const barSize = Math.max(14, Math.min(48, Math.floor(300 / Math.max(1, topData.length)))) - 5;
 
         return (
             <div style={{ width: '100%', padding: '8px', height: '100%' }} aria-label="Ranking bar chart">
 
-                <div style={{ width: '100%', height: containerHeight, minHeight: 280, background: 'transparent', borderRadius: 6 }}>
+                <div style={{ width: '100%', height: containerHeight, minHeight: 280, minWidth: 300, background: 'transparent', borderRadius: 6 }}>
                     {(!topData || topData.length === 0) ? (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>No ranking data available</div>
                     ) : (
@@ -326,19 +300,17 @@ const RankingBarChart = ({ topN = 10 }) => {
                                     barSize={barSize}
                                 >
                                     {topData.map((entry, i) => {
+                                        const active = highlightedState || selectedState;
                                         const entryStateName = entry.state || entry.region_name || `entry-${i}`;
-                                        // derive a canonical two-letter code for the entry when possible
                                         const entryCode = (entry.region_code || entry.code || (STATE_NAME_TO_CODE && STATE_NAME_TO_CODE[entryStateName])) ? (entry.region_code || entry.code || STATE_NAME_TO_CODE[entryStateName]) : null;
 
-                                        const isHighlighted = Boolean(highlightedState && (
-                                            // prefer code matching
-                                            (highlightedState.code && entryCode && String(entryCode).toUpperCase() === String(highlightedState.code).toUpperCase()) ||
-                                            // fallback to name matching
-                                            (highlightedState.name && entryStateName === highlightedState.name)
+                                        const isHighlighted = Boolean(active && (
+                                            (active.code && entryCode && String(entryCode).toUpperCase() === String(active.code).toUpperCase()) ||
+                                            (active.name && entryStateName === active.name)
                                         ));
 
-                                        const fill = isHighlighted ? '#696868ff' : BAR_BACKGROUND_COLORS[i % BAR_BACKGROUND_COLORS.length];
-                                        const stroke = isHighlighted ? '#767575ff' : BAR_BORDER_COLORS[i % BAR_BORDER_COLORS.length];
+                                        const fill = isHighlighted ? '#00d9ff' : BAR_BACKGROUND_COLORS[i % BAR_BACKGROUND_COLORS.length];
+                                        const stroke = isHighlighted ? '#00d9ff' : BAR_BORDER_COLORS[i % BAR_BORDER_COLORS.length];
                                         const strokeWidth = isHighlighted ? 3 : 2;
 
                                         return (

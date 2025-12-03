@@ -13,11 +13,17 @@
   --panel-2:#0b1220;   
   --text:#e5e7eb;      
   --muted:#94a3b8;     
-  --accent:#38bdf8;    
+  --primary:#3b82f6;   
+  --secondary:#52276d; 
+  --secondary-dim:#32134a;
+  --purple:#9d00ff;
+  --purple-dim: rgba(157, 0, 255, 0.15);
+  --accent:#00d9ff;    
+  --accent-dim:#0099cc;
   --accent-2:#22c55e;  
   --warn:#f59e0b;      
   --danger:#ef4444;    
-  --border:#1f2937;    
+  --border:#32134a;    
   --chip:#0b223a;
 }
 
@@ -94,13 +100,13 @@ body{
 }
 
 .nav-link:hover {
-  color: var(--text);
-  background: rgba(56, 189, 248, 0.1);
+  color: var(--accent);
+  background: rgba(0, 217, 255, 0.1);
 }
 
 .nav-link.active {
   color: var(--accent);
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(0, 217, 255, 0.15);
 }
 
 .nav-link.active::after {
@@ -195,12 +201,32 @@ header{
   font-size: clamp(32px, 7vw, 40px);
   letter-spacing: 2.0px;
 }
+/* Logo used in header when present */
+.logo{
+  height: clamp(25px, 55vw, 115px);
+  width: auto;
+  display: block;
+
+}
 .subtitle{color:var(--muted);font-size:13px;margin-top:6px}
 
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .select,.button{
-  appearance:none;border:1px solid var(--border);background:var(--panel);
+  appearance:none;border:1px solid rgba(157, 0, 255, 0.2);background:var(--panel);
   color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px
+}
+.info-button{background:transparent;border:none;padding:0;margin:0;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center}
+/* Make all info icons turn accent-blue on hover. Include buttons with aria-label containing 'info' to
+   cover cases where inline styles are used instead of the `info-button` class. Use !important so hover
+   color overrides inline `style={{ color: ... }}` in some components. */
+.info-button:hover,
+.tab-headers .info-button:hover,
+/* match aria-label or title containing 'info' (case-insensitive) */
+button[aria-label*="info" i]:hover,
+button[title*="info" i]:hover,
+[aria-label*="info" i]:hover,
+[title*="info" i]:hover {
+  color: var(--accent) !important;
 }
 .button.primary{background:linear-gradient(180deg,#0ea5e9,#0284c7);border:none}
 
@@ -248,13 +274,13 @@ main{
 
 .panel{
   background:var(--panel);
-  border:1px solid var(--border);
+  border:1px solid rgba(157, 0, 255, 0.15);
   border-radius:14px;
   padding:14px;
   width: 100%;
   box-sizing: border-box;
 }
-.panel h3{margin:0 0 10px;font-size:14px;font-weight:700;color:#d1d5db}
+.panel h3{margin:0 0 10px;font-size:14px;font-weight:700;color:var(--text)}
 
 @media (max-width: 600px) {
   .panel {
@@ -264,11 +290,10 @@ main{
 }
 
 /* KPI cards */
-.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media (min-width:720px){.kpis{grid-template-columns:repeat(4,1fr)}}
-.kpi{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:12px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:var(--panel-2);border:1px solid rgba(157, 0, 255, 0.15);border-radius:12px;padding:12px}
 .kpi .label{color:var(--muted);font-size:12px}
-.kpi .value{font-size:22px;font-weight:700;margin-top:6px}
+.kpi .value{font-size:22px;font-weight:700;margin-top:6px;color:var(--text)}
 
 /* Heatmap placeholder */
 .heatmap{
@@ -346,7 +371,7 @@ main{
   min-height: 350px;
   max-height: 450px;
   height: 100%;
-  border: 1px solid var(--border);
+  border: 2px solid rgba(178, 75, 243, 0.2);
   border-radius: 12px;
   background: var(--panel-2);
   padding: 20px;
@@ -356,11 +381,12 @@ main{
   flex-direction: column;
   overflow: hidden;
   contain: layout size;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .chart-box:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(56, 189, 248, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 217, 255, 0.2), 0 0 0 1px rgba(0, 217, 255, 0.15);
   border-color: var(--accent);
 }
 
@@ -401,6 +427,16 @@ main{
   overflow: hidden;
   width: 100%;
   height: 100%;
+}
+
+/* Recharts: make the hover outline thinner and more subtle for bars/rectangles */
+.recharts-rectangle {
+  transition: stroke-width 0.12s ease, stroke 0.12s ease, opacity 0.12s ease;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 0;
+}
+.recharts-rectangle:hover {
+  stroke-width: 0.6; /* thin highlight on hover */
 }
 
 /* Prevent browser focus outlines or selection rectangles from appearing when interacting with charts */
@@ -475,18 +511,20 @@ main{
 }
 
 /* Insights sidebar */
-.insights{display:grid;gap:12px}
+.insights{display:grid;gap:12px;padding-top:8px;border-top:1px solid rgba(157, 0, 255, 0.2)}
 .list{font-size:13px;color:var(--muted);line-height:1.4}
 .chip{
-  display:inline-block;padding:6px 10px;border:1px solid var(--border);
-  border-radius:999px;background:var(--chip);color:#cbd5e1;font-size:12px
+  display:inline-block;padding:6px 10px;border:1px solid var(--secondary);
+  border-radius:999px;background:var(--secondary-dim);color:#ffffff;font-size:12px
 }
 
 /* Table */
 .table{width:100%;border-collapse:collapse;font-size:13px}
 .table th,.table td{padding:10px;border-bottom:1px solid var(--border)}
 .table th{text-align:left;color:#cbd5e1;font-weight:600}
-.table tr:hover{background:rgba(2,132,199,0.08)}
+.table tr:hover{background:rgba(157, 0, 255, 0.08)}
+/* Disable hover highlight specifically for forecast tables (keep hover for other tables) */
+.table.forecast-table tr:hover, .forecast-table tr:hover { background: transparent !important; }
 
 /* About Us Page Styles */
 .about-page {
@@ -511,7 +549,7 @@ main{
   font-size: clamp(36px, 8vw, 48px);
   font-weight: 400;
   letter-spacing: 2px;
-  color: var(--accent);
+  color: var(--text);
   margin: 0 0 20px 0;
 }
 
@@ -526,7 +564,7 @@ main{
   margin-bottom: 60px;
   padding: 30px;
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(157, 0, 255, 0.2);
   border-radius: 16px;
 }
 
@@ -537,6 +575,7 @@ main{
   margin: 0 0 20px 0;
   border-bottom: 2px solid var(--accent);
   padding-bottom: 10px;
+  margin: 0 0 20px 0;
   display: inline-block;
 }
 
@@ -621,9 +660,12 @@ main{
 /* Team Section */
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 30px;
   margin-top: 30px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .team-member {
@@ -779,11 +821,11 @@ main{
 }
 
 .contact-title {
-  font-family: "GlichFont", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: "GlichFont", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   font-size: clamp(36px, 8vw, 48px);
   font-weight: 400;
   letter-spacing: 2px;
-  color: var(--accent);
+  color: var(--text);
   margin: 0 0 20px 0;
 }
 
@@ -1058,7 +1100,7 @@ main{
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--purple-dim);
 }
 
 .forecast-header h3 {
@@ -1129,7 +1171,7 @@ main{
   background: var(--panel-2);
   border-radius: 12px;
   padding: 20px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--purple-dim);
 }
 
 .forecast-country-section h4 {
@@ -1187,7 +1229,7 @@ main{
   padding: 12px;
   background: var(--panel);
   border-radius: 8px;
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--purple);
   font-size: 13px;
   line-height: 1.5;
   color: var(--muted);
@@ -1196,6 +1238,31 @@ main{
 .forecast-explanation strong {
   color: var(--text);
 }
+
+/* Small external/open icon used beside headings (e.g., Top CVEs) */
+.external-icon-button{background:transparent;border:none;padding:4px;margin-left:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;border-radius:6px}
+.external-icon-button:hover{color:var(--text);background:rgba(255,255,255,0.02)}
+.external-icon-inline{display:inline-flex;align-items:center;margin-left:6px;color:var(--muted);padding:2px}
+.external-icon-inline .external-icon{width:16px;height:16px}
+.external-icon{width:16px;height:16px;display:block;flex-shrink:0;fill:none;stroke:currentColor}
+
+/* Map tooltip styled similarly to chart tooltips */
+.map-tooltip {
+  background: #111827;
+  color: #e5e7eb;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  min-width: 140px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  font-size: 13px;
+}
+
+/* Zoom controls for map */
+.map-zoom-controls{display:flex;flex-direction:column;gap:6px}
+.map-zoom-controls button{background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.06);color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1}
+.map-zoom-controls button:hover{background:rgba(255,255,255,0.02)}
+.map-zoom-controls button:active{transform:translateY(1px)}
 
 @media (max-width: 768px) {
   .forecast-header {
@@ -1247,7 +1314,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 
 .modal-content {
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(157, 0, 255, 0.2);
   border-radius: 16px;
   max-width: 600px;
   width: 100%;
@@ -1367,7 +1434,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 }
 
 .button.secondary:hover {
-  background: rgba(56, 189, 248, 0.05);
+  background: rgba(0, 217, 255, 0.05);
   border-color: var(--accent);
 }
 

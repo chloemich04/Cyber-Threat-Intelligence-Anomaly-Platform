@@ -2,7 +2,7 @@
   "forecast_horizon_weeks": 4,
   "predictions": [
     {
-      "week_start": "2025-11-13",
+      "week_start": "2025-11-25",
       "expected_count": 8,
       "expected_count_ci": [
         3,
@@ -35,7 +35,7 @@
       "confidence": 0.68
     },
     {
-      "week_start": "2025-11-20",
+      "week_start": "2025-12-02",
       "expected_count": 9,
       "expected_count_ci": [
         4,
@@ -47,35 +47,7 @@
         {
           "signal_type": "cve",
           "id": "CVE-2018-2368",
-          "score": 0.23
-        },
-        {
-          "signal_type": "tag",
-          "id": "exploit",
-          "score": 0.2
-        },
-        {
-          "signal_type": "tag",
-          "id": "vulnerability",
-          "score": 0.17
-        }
-      ],
-      "confidence": 0.69
-    },
-    {
-      "week_start": "2025-11-27",
-      "expected_count": 10,
-      "expected_count_ci": [
-        5,
-        18
-      ],
-      "spike_probability": 0.22,
-      "spike_threshold_pct": 0.25,
-      "top_signals": [
-        {
-          "signal_type": "cve",
-          "id": "CVE-2018-1000075",
-          "score": 0.22
+          "score": 0.24
         },
         {
           "signal_type": "tag",
@@ -88,27 +60,22 @@
           "score": 0.16
         }
       ],
-      "confidence": 0.7
+      "confidence": 0.69
     },
     {
-      "week_start": "2025-12-04",
-      "expected_count": 11,
+      "week_start": "2025-12-09",
+      "expected_count": 10,
       "expected_count_ci": [
-        5,
-        20
+        4,
+        18
       ],
-      "spike_probability": 0.24,
+      "spike_probability": 0.22,
       "spike_threshold_pct": 0.25,
       "top_signals": [
         {
           "signal_type": "cve",
-          "id": "CVE-2018-2368",
-          "score": 0.21
-        },
-        {
-          "signal_type": "cve",
           "id": "CVE-2018-1000075",
-          "score": 0.2
+          "score": 0.23
         },
         {
           "signal_type": "tag",
@@ -121,6 +88,34 @@
           "score": 0.15
         }
       ],
+      "confidence": 0.7
+    },
+    {
+      "week_start": "2025-12-16",
+      "expected_count": 11,
+      "expected_count_ci": [
+        5,
+        20
+      ],
+      "spike_probability": 0.24,
+      "spike_threshold_pct": 0.25,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-2368",
+          "score": 0.22
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-1000075",
+          "score": 0.2
+        },
+        {
+          "signal_type": "tag",
+          "id": "exploit",
+          "score": 0.17
+        }
+      ],
       "confidence": 0.71
     }
   ],
@@ -130,7 +125,7 @@
       "probability": 0.45
     },
     {
-      "threat_type": "Vulnerability Disclosure",
+      "threat_type": "Vulnerability",
       "probability": 0.35
     },
     {
@@ -166,7 +161,7 @@
     "temperature": 0,
     "aggregation_method": "weekly_count_us_only",
     "region_analyzed": "United States",
-    "forecast_generated_at_utc": "2025-11-13T04:11:37.558005"
+    "forecast_generated_at_utc": "2025-11-25T20:01:09.555482"
   },
   "threat_types": [
     {
@@ -207,5 +202,5 @@
     }
   ],
   "total_threats": 36,
-  "generated_at": "2025-11-12T22:11:37.561293"
+  "generated_at": "2025-11-25T14:01:09.558545"
 }

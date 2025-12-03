@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSelectedState } from '../context/SelectedStateContext';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 // Module-level cache to prevent duplicate API calls - stores full raw response
@@ -67,14 +68,30 @@ function fetchInternetChartData() {
   return _internetChartPromise;
 }
 
-export default function TopStatesDonutChart() {
+export default function TopStatesDonutChart({ injectedData = null, exportMode = false }) {
   const [rawData, setRawData] = useState([]);
   const [data, setData] = useState([]);
   const [hovered, setHovered] = useState(null);
-  const [selectedState, setSelectedState] = useState(null);
+  const { selectedState } = useSelectedState();
 
-  // Fetch data on mount
+  // Fetch data on mount or use injected data when provided
   useEffect(() => {
+    if (injectedData) {
+      console.debug && console.debug('[InternetChart] using injectedData length:', Array.isArray(injectedData) ? injectedData.length : 'object');
+      try {
+        const raw = injectedData;
+        setRawData(raw || []);
+        // When exportMode is true, force the national/top-states view regardless of selectedState
+        const sorted = Array.isArray(raw) ? [...raw].sort((a, b) => (b.total_count || 0) - (a.total_count || 0)) : [];
+        const top10 = sorted.slice(0, 10);
+        const chartData = top10.map(state => ({ name: state.region_code, value: state.total_count }));
+        setData(chartData);
+        return;
+      } catch (err) {
+        console.error('[InternetChart] Error applying injected data:', err);
+      }
+    }
+
     console.log('[InternetChart] Fetching data...');
     fetchInternetChartData().then(raw => {
       console.log('[InternetChart] Received raw data:', raw);
@@ -96,64 +113,90 @@ export default function TopStatesDonutChart() {
     }).catch(err => {
       console.error('[InternetChart] Error in useEffect:', err);
     });
-  }, []);
+  }, [injectedData]);
 
-  // Listen for state selection from heatmap
+  // Notify PDF exporter when this chart's rendered `data` is available
   useEffect(() => {
-    function onStateSelected(e) {
-      const detail = e && e.detail ? e.detail : e;
-      const stateCode = detail && (detail.code || detail.region_code);
-      if (!stateCode) return;
+    if (Array.isArray(data) && data.length > 0) {
+      try {
+        window.dispatchEvent(new CustomEvent('dashboardPDF:chartReady', { detail: { id: 'internet-provider' } }));
+      } catch (e) {}
+    }
+  }, [data]);
 
-      // Find the state data in raw cache
-      const stateData = rawData.find(s => s.region_code === stateCode);
-      if (stateData && Array.isArray(stateData.isps)) {
-        // Show top ISPs for this state
-        const topIsps = stateData.isps.slice(0, 10);
-        const ispChartData = topIsps.map(isp => ({
-          name: isp.isp,
-          value: isp.cnt
-        }));
+  // Recompute chart data whenever rawData or the global selectedState changes
+  useEffect(() => {
+    if (!rawData || rawData.length === 0) return;
+
+    const parseNum = (v) => {
+      if (v == null) return 0;
+      if (typeof v === 'number') return v;
+      const s = String(v).trim();
+      const cleaned = s.replace(/[^0-9.-]+/g, '');
+      const n = parseFloat(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    // If a state is selected via context, show top 5 ISPs for that state. When in exportMode, ignore selectedState and show national view.
+    if (!exportMode && selectedState && (selectedState.code || selectedState.name)) {
+      const selCode = selectedState.code ? String(selectedState.code).toUpperCase() : null;
+      const selName = selectedState.name ? String(selectedState.name).trim().toLowerCase() : null;
+
+      const stateData = rawData.find(s => {
+        if (!s) return false;
+        if (selCode && s.region_code && String(s.region_code).toUpperCase() === selCode) return true;
+        if (selName && s.region_name && String(s.region_name).trim().toLowerCase() === selName) return true;
+        return false;
+      });
+
+      if (stateData) {
+        let isps = [];
+        if (Array.isArray(stateData.isps)) isps = stateData.isps;
+        else if (Array.isArray(stateData.providers)) isps = stateData.providers;
+        else if (Array.isArray(stateData.isp_list)) isps = stateData.isp_list;
+
+        // normalize and rank ISPs by numeric count/value
+        const ispChartData = isps.map(isp => ({
+          name: isp.isp || isp.name || isp.provider || isp.key || 'Unknown',
+          value: parseNum(isp.cnt ?? isp.count ?? isp.value ?? isp.total ?? isp.incidents ?? isp[1] ?? 0)
+        }))
+        .sort((a,b) => b.value - a.value)
+        .slice(0,5);
+
         setData(ispChartData);
-        setSelectedState(stateCode);
+        return;
       }
+
+      // no matching state or no ISP list: clear view
+      setData([]);
+      return;
     }
 
-    window.addEventListener('stateSelected', onStateSelected);
-    return () => window.removeEventListener('stateSelected', onStateSelected);
-  }, [rawData]);
+    // No selection: show top 5 STATES by number of ISPs (fallback to total_count)
+    const statesWithCounts = rawData.map(s => {
+      const ispCount = Array.isArray(s.isps) ? s.isps.length : (s.isp_count ?? s.total_isps ?? 0);
+      const fallback = parseNum(s.total_count ?? s.total_cves ?? s.count ?? s.total ?? 0);
+      return {
+        code: s.region_code || s.region_name || 'US',
+        count: ispCount || fallback
+      };
+    });
 
-  // Listen for state cleared event
-  useEffect(() => {
-    function onStateCleared() {
-      // Reset to top 10 states view
-      if (rawData.length > 0) {
-        const sorted = [...rawData].sort((a, b) => b.total_count - a.total_count);
-        const top10 = sorted.slice(0, 10);
-        const chartData = top10.map(state => ({
-          name: state.region_code,
-          value: state.total_count
-        }));
-        setData(chartData);
-        setSelectedState(null);
-      }
-    }
-
-    window.addEventListener('stateCleared', onStateCleared);
-    return () => window.removeEventListener('stateCleared', onStateCleared);
-  }, [rawData]);
+    const topStates = statesWithCounts.sort((a,b) => b.count - a.count).slice(0,5);
+    const chartData = topStates.map(st => ({ name: st.code, value: st.count }));
+    setData(chartData);
+  }, [rawData, selectedState]);
 
   const COLORS = [
-    '#e3f0f8ff', 
-    '#3c7da9ff', 
-    '#04273bff',
-    '#7eb8daff',
-    '#1d78a6ff',
-    '#143b51ff',
-    '#b2d9f0ff',
-    '#2a5f7fff',
-    '#0a1f2eff',
-    '#a5cfe6ff'
+    '#9d00ffff', 
+    '#e2b3ffff', 
+    '#482563ff',
+    '#7f648fff', 
+    '#48276fff',
+    '#e5d3f0ff', 
+    '#2b2632ff',
+    
+   
   ];
 
   // Every other slice gets lines (odd indices: 1, 3, 5, 7, 9)
@@ -180,7 +223,7 @@ export default function TopStatesDonutChart() {
 
   // Determine chart title based on whether a state is selected
   const chartTitle = selectedState 
-    ? `Top ISPs in ${selectedState}` 
+    ? `Top ISPs per state` 
     : 'Top 10 States by Total Count';
 
   return (
@@ -190,7 +233,8 @@ export default function TopStatesDonutChart() {
         {chartTitle}
       </div>
       <div style={{ width: '100%', height: '190px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '4px' }}>
-        <PieChart width={200} height={200}>
+        <div style={{ width: '100%', maxWidth: 420, display: 'flex', justifyContent: 'center' }}>
+          <PieChart width={200} height={200}>
           <defs>
             {data.map((entry, index) => {
               if (!hasPattern(index)) return null;
@@ -260,7 +304,8 @@ export default function TopStatesDonutChart() {
             align="center"
             formatter={(value) => <span style={{ color: '#e5e7eb' }}>{value}</span>}
           />
-        </PieChart>
+          </PieChart>
+        </div>
       </div>
 
     </div>

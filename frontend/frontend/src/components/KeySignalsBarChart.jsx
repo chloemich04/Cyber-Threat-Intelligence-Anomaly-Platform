@@ -1,4 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+
+function SimpleSigTooltip({ active, payload }) {
+  if (!active || !payload || !payload.length) return null;
+  const p = payload[0].payload || payload[0];
+  const pct = Math.round((p.value || 0) * 100);
+  const raw = p.total || 0;
+  return (
+    <div style={{ background: '#0b1220', color: '#e5e7eb', padding: 10, borderRadius: 8, border: '1px solid #1f2937', boxShadow: '0 8px 20px rgba(0,0,0,0.5)', maxWidth: 320 }}>
+      <div style={{ fontWeight: 700 }}>{p.label}</div>
+      <div style={{ marginTop: 6, color: '#cbd5e1' }}>{`${pct}% — ${raw && typeof raw === 'number' && raw.toFixed ? raw.toFixed(2) : raw} (aggregated)`}</div>
+    </div>
+  );
+}
 
 export default function KeySignalsBarChart({ signals = [], predictions = [] }) {
   // canonicalize top signals list (prefer provided user-friendly list)
@@ -135,6 +150,9 @@ export default function KeySignalsBarChart({ signals = [], predictions = [] }) {
   // Default to false so both CVE rows and tag rows are shown together by default.
   const [aggregateCves, setAggregateCves] = useState(false);
 
+  // ref for chart wrapper used by tooltips/positioning (declare early to keep hook order stable)
+  const chartRef = useRef(null);
+
   // If aggregation is enabled, collapse CVE rows into tag rows and sum per-week scores.
   const { displayRows, displayMatrix, contributorsByTag } = useMemo(() => {
     if (!aggregateCves) return { displayRows: collapsedRows, displayMatrix: collapsedMatrix, contributorsByTag: null };
@@ -193,47 +211,146 @@ export default function KeySignalsBarChart({ signals = [], predictions = [] }) {
       </div>
     );
   }
+  // Build totals per display row (sum across weeks)
+  const totals = (usedRows || []).map((r, idx) => {
+    const vals = usedMatrix[idx] || [];
+    const total = vals.reduce((s, v) => s + (Number(v) || 0), 0);
+    return { key: r.key, label: r.label, type: r.type, total };
+  });
 
-  // interaction removed: this chart is now static (click-to-filter removed)
+  // sort descending and take top N
+  const TOP_N = 12;
+  const sorted = [...totals].sort((a, b) => b.total - a.total).slice(0, TOP_N);
+
+  // compute max so we can normalize into 0..1 for the X axis (fits the existing panel scale)
+  const maxTotal = Math.max(0.000001, ...sorted.map(d => d.total));
+
+  // normalized chart data and keep original totals for tooltip
+  const chartData = sorted.map((d, i) => ({ ...d, rank: i + 1, value: (d.total || 0) / maxTotal }));
+
+  const COLORS = ['#9d00ff', '#cc9cea', '#482563', '#9b8be6', '#00d9ff', '#22c55e'];
+
+
+  // Custom Y tick renderer: wrap long labels into up to 2 lines and center them vertically
+  const renderYAxisTick = (props) => {
+    const { y, payload } = props;
+    const label = String(payload.value || '');
+    const maxLen = 28;
+    let line1 = label;
+    let line2 = '';
+    if (label.length > maxLen) {
+      const idx = label.lastIndexOf(' ', maxLen) > 0 ? label.lastIndexOf(' ', maxLen) : maxLen;
+      line1 = label.slice(0, idx).trim();
+      line2 = label.slice(idx).trim();
+    }
+    return (
+      <g transform={`translate(0,${y})`}>
+        <text x={6} y={-6} textAnchor="start" fill="#fff" fontSize={13} style={{ pointerEvents: 'none' }}>{line1}</text>
+        {line2 && <text x={6} y={10} textAnchor="start" fill="#cbd5e1" fontSize={12} style={{ pointerEvents: 'none' }}>{line2}</text>}
+      </g>
+    );
+  };
+
+  // PortalTooltip: render tooltip into document.body so it's always above other elements
+  function PortalTooltip({ chartRef }) {
+    const [visible, setVisible] = useState(false);
+    const [pos, setPos] = useState({ x: 0, y: 0 });
+    const [payload, setPayload] = useState(null);
+
+    useEffect(() => {
+      const el = chartRef && chartRef.current;
+      if (!el) return;
+
+      const onMove = (ev) => {
+        const rect = el.getBoundingClientRect();
+        if (ev.clientX < rect.left || ev.clientX > rect.right || ev.clientY < rect.top || ev.clientY > rect.bottom) {
+          setVisible(false);
+          return;
+        }
+
+        const localY = ev.clientY - rect.top;
+        const rowsCount = Math.max(1, chartData.length);
+        const rowH = rect.height / rowsCount;
+        let idx = Math.floor(localY / rowH);
+        if (idx < 0) idx = 0;
+        if (idx >= rowsCount) idx = rowsCount - 1;
+
+        const d = chartData[idx];
+        if (!d) {
+          setVisible(false);
+          return;
+        }
+
+        setPayload(d);
+        const tooltipX = Math.min(window.innerWidth - 260, ev.clientX + 12);
+        const tooltipY = Math.max(8, Math.min(window.innerHeight - 80, ev.clientY - 8));
+        setPos({ x: tooltipX, y: tooltipY });
+        setVisible(true);
+      };
+
+      const onLeave = () => setVisible(false);
+
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerleave', onLeave);
+
+      return () => {
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerleave', onLeave);
+      };
+    }, [chartRef, chartData]);
+
+    if (typeof document === 'undefined') return null;
+
+    return ReactDOM.createPortal(
+      visible && payload ? (
+        <div style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 2147483000, pointerEvents: 'none', transform: 'translateZ(0)', willChange: 'transform, opacity' }} aria-hidden>
+          <div style={{ background: '#111827', color: '#e5e7eb', padding: '8px 10px', borderRadius: 8, border: '1px solid #1f2937', width: 250, fontSize: 13, boxShadow: '0 8px 22px rgba(0,0,0,0.6)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#e5e7eb' }}>{`${payload.rank != null ? `Rank #${payload.rank}` : 'Rank —'} — ${payload.label}`}</div>
+            <div style={{ marginTop: 6, color: '#e5e7eb' }}>{`Total: ${Math.round((payload.total || 0) * 100) / 100}`}</div>
+          </div>
+        </div>
+      ) : null,
+      document.body
+    );
+  }
 
   return (
-    <div style={{padding: '0.5rem'}}>
-   
-
-      {/* Heatmap grid */}
-      <div style={{overflowX: 'auto'}}>
-        <div style={{display: 'grid', gridTemplateColumns: `200px repeat(${weeks.length}, 1fr)`, gap: 8, alignItems: 'center'}}>
-          {/* header row: empty cell + week labels */}
-          <div />
-          {weeks.map((wk, cIdx) => (
-            <div key={`wk-${cIdx}`} style={{fontSize: 12, color: 'var(--muted)', textAlign: 'center'}}>{formatWeek(wk)}</div>
-          ))}
-
-          {/* rows */}
-          {usedRows.map((r, rowIdx) => (
-            <React.Fragment key={`row-${rowIdx}`}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-                <div style={{fontWeight: 600}} title={r.label}>{r.label}</div>
-              </div>
-
-              {(usedMatrix[rowIdx] || []).map((val, colIdx) => {
-                const score = Number(val) || 0;
-                const intensity = Math.min(1, score / maxVal);
-                const bg = score > 0 ? `rgba(56,189,248, ${0.25 + 0.7 * intensity})` : 'transparent';
-                const border = score > 0 ? 'none' : '1px solid rgba(255,255,255,0.04)';
-                return (
-                  <div key={`cell-${rowIdx}-${colIdx}`} title={`${r.label} — ${formatWeek(weeks[colIdx])} — ${Math.round(score * 100)}%`} style={{height: 32, background: bg, borderRadius: 4, border}}> 
-                    {/* visually centered score for high values */}
-                    {score > 0.0 && (
-                      <div style={{textAlign: 'center', lineHeight: '32px', fontWeight: 700, color: 'rgba(255,255,255,0.95)'}}>{Math.round(score * 100)}%</div>
-                    )}
-                  </div>
-                );
-              })}
-            </React.Fragment>
-          ))}
+    <div style={{ width: '100%', height: 340, padding: 8 }} aria-label="Key signals bar chart">
+      {(!chartData || chartData.length === 0) ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--muted)' }}>No key signals available</div>
+      ) : (
+        <div ref={chartRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart layout="vertical" data={chartData} margin={{ top: 8, right: 12, left: 12, bottom: 8 }} barCategoryGap={8}>
+            <CartesianGrid vertical={false} stroke="#0f172a" strokeDasharray="3 6" />
+            <XAxis type="number" domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#0b1220' }} tickLine={false} />
+            <YAxis type="category" dataKey="label" width={160} tick={renderYAxisTick} axisLine={false} tickLine={false} />
+                      {/* Tooltip replaced by PortalTooltip to render above the chart */}
+            <Bar dataKey="value" radius={[18, 18, 18, 18]} isAnimationActive={true} animationDuration={700} barSize={20}>
+              {chartData.map((entry, idx) => (
+                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+              ))}
+            </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+                    {/* Portal tooltip component — rendered on top of everything */}
+                    <PortalTooltip chartRef={chartRef} />
         </div>
-      </div>
+      )}
+      {/* Bottom metrics: show top signal and display settings similar to Risk Matrix */}
+      {chartData && chartData.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, color: 'var(--muted)', fontSize: 13 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontWeight: 700, color: 'var(--text)' }}>{chartData[0].label}</div>
+            <div style={{ marginTop: 4 }}>{`Top signal: ${Math.round((chartData[0].value || 0) * 100)}%`}</div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div>{`Signals shown: ${chartData.length}`}</div>
+            <div>{`Aggregation: ${aggregateCves ? 'On' : 'Off'}`}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

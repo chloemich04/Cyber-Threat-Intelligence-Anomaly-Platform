@@ -6,9 +6,15 @@ export default function PredictedTypesDonut({ predictedTypes }) {
   const data = (predictedTypes || []).map(pt => ({ name: pt.threat_type, value: Math.max(0, pt.probability || 0) }));
 
   // Choose a color palette fallback
-  const palette = ['#b2e0fcff', 
-    '#3a6e90ff', 
-    '#022a43ff'];
+  const palette = [
+    '#9d00ffff', 
+    '#e2b3ffff', 
+    '#482563ff',
+    '#7f648fff', 
+    '#48276fff',
+    '#e5d3f0ff', 
+    '#2b2632ff',
+  ];
 
   // Slightly smaller outerRadius and increased wrapper height to make room for legend below
   return (
@@ -25,6 +31,7 @@ function DonutWrapper({ data, palette }) {
     'Vulnerability Disclosure': 'Public disclosure of vulnerabilities which can increase exploit risk if not patched promptly.',
     'Phishing': 'Social-engineering attacks aimed at tricking users into revealing credentials or executing malicious actions.',
     'Ransomware': 'Malware that encrypts data and demands payment; typically high-impact for operations.',
+    'Vulnerability': 'Weakness in a system\'s hardware, software, or procedures that a cyber attacker can exploit to gain unauthorized access, steal data, or cause damage.',
     'Default': 'No description available for this threat type.'
   };
 

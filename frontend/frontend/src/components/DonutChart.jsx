@@ -37,24 +37,8 @@ export default function DonutChart({ data = [], colors = {}, height = 280, inner
               return <Cell key={`cell-${index}`} fill={fill} />;
             })}
           </Pie>
-          <Tooltip 
-            contentStyle={{ 
-              background: '#111827',
-              border: '1px solid #1f2937',
-              borderRadius: '8px',
-              color: '#e5e7eb',
-              padding: '8px 10px'
-            }}
-            itemStyle={{
-              color: '#e5e7eb',
-              fontSize: '12px'
-            }}
-            labelStyle={{
-              color: '#e5e7eb',
-              fontSize: '13px',
-              fontWeight: '700'
-            }}
-          />
+          {/* Styled tooltip matching RankingBarChart's CustomTooltip */}
+          <Tooltip content={<DonutCustomTooltip />} />
           <Legend
             verticalAlign="bottom"
             align="center"
@@ -73,3 +57,27 @@ export default function DonutChart({ data = [], colors = {}, height = 280, inner
     </div>
   );
 }
+
+  function DonutCustomTooltip({ active, payload, label }) {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0];
+    const obj = p.payload || {};
+    const name = obj.name || label || '';
+    const value = obj.value != null ? obj.value : (p.value != null ? p.value : null);
+    const formatted = typeof value === 'number' ? (Number.isInteger(value) ? value : Math.round(value * 100) / 100) : value;
+
+    const style = {
+      background: '#111827',
+      color: '#e5e7eb',
+      padding: '8px 10px',
+      borderRadius: 8,
+      border: '1px solid #1f2937',
+    };
+
+    return (
+      <div style={style}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#e5e7eb' }}>{name}</div>
+        <div style={{ fontSize: 12, color: '#e5e7eb', marginTop: 6 }}>{String(formatted)}</div>
+      </div>
+    );
+  }

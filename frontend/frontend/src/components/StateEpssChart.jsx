@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Label, Cell
 } from "recharts";
 import InfoModal from './InfoModal';
+import { useSelectedState } from '../context/SelectedStateContext';
 
 // Module-level cache to avoid re-fetching EPSS data across mounts
 let _epssDataCache = null;
@@ -22,15 +23,22 @@ try {
 }
 
 const BAR_BACKGROUND_COLORS = [
-  '#b2e0fcff',
-  '#3a6e90ff',
-  '#022a43ff',
+    '#9d00ffff', 
+    '#cc9ceaff', 
+    '#482563ff',
 ];
 
 const BAR_BORDER_COLORS = [
-  '#8eaec2ff',
-  '#487794ff',
-  '#0a334eff',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
+  '#1f2937',
 ];
 
 const panelStyle = {
@@ -48,7 +56,7 @@ const titleStyle = {
   marginBottom: 6
 };
 
-const titleTextStyle = { fontSize: 16, fontWeight: 600, color: '#dff6ff' };
+const titleTextStyle = { fontSize: 16, fontWeight: 600, color: '#e5e7eb' };
 
 const customTooltipStyle = {
   background: '#111827',
@@ -69,7 +77,7 @@ function CustomTooltip({ active, payload, label }) {
   return (
     <div style={customTooltipStyle}>
       <div style={{ fontSize: 13, fontWeight: 700, color: '#e5e7eb' }}>{stateName}</div>
-      <div style={{ fontSize: 12, color: '#e5e7eb', marginTop: 6 }}>{`Avg EPSS: ${formatted}`}</div>
+      <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{`Avg EPSS: ${formatted}`}</div>
     </div>
   );
 }
@@ -155,13 +163,28 @@ const normalizeEpssData = (arr) => {
   });
 };
 
-const StateEpssChart = ({ topN = 10 }) => {
+const StateEpssChart = ({ topN = 10, injectedData = null, exportMode = false }) => {
   const [data, setData] = useState([]);
   const [highlightedState, setHighlightedState] = useState(null);
   const [showInfo, setShowInfo] = useState(false);
   const fetchedRef = useRef(false);
+  const { selectedState } = useSelectedState();
 
   useEffect(() => {
+    // If injectedData is provided (during PDF export), use it and skip fetching
+    if (injectedData) {
+      console.debug && console.debug('[StateEpssChart] using injectedData with length:', Array.isArray(injectedData) ? injectedData.length : (injectedData ? 'object' : 'null'));
+      try {
+        const normalized = normalizeEpssData(injectedData);
+        _epssDataFetched = true;
+        _epssDataCache = normalized;
+        setData(normalized);
+        return;
+      } catch (err) {
+        console.error('Error normalizing injected EPSS data:', err);
+      }
+    }
+
     // If we have cached data, use it immediately
     if (_epssDataFetched && _epssDataCache) {
       setData(_epssDataCache);
@@ -251,43 +274,59 @@ const StateEpssChart = ({ topN = 10 }) => {
     return () => window.removeEventListener('stateCleared', onStateCleared);
   }, []);
 
-  // derive top N by avg_epss descending, but ensure highlighted state is visible
+  // Derive top N from the full dataset (national top-N). If a state is
+  // selected, highlight it if it's in the top-N; otherwise replace the
+  // Nth entry with the selected state so it remains visible.
   const topData = useMemo(() => {
     console.log('Computing topData from data.length=', data?.length, 'topN=', topN);
     if (!Array.isArray(data)) return [];
-    const sorted = [...data].sort((a, b) => (b.avg_epss || 0) - (a.avg_epss || 0));
-    const base = sorted.slice(0, topN).map((d, i) => ({ ...d, rank: d.rank_overall || i + 1 }));
-    console.log('topData base computed:', base.length, 'items, sample:', base.slice(0, 2));
+    const sortedFull = [...data].sort((a, b) => (b.avg_epss || 0) - (a.avg_epss || 0));
+    const base = sortedFull.slice(0, topN).map((d, i) => ({ ...d, rank: d.rank_overall || i + 1 }));
 
-    if (highlightedState) {
-      const inBase = base.some(d => {
-        if (!d) return false;
-        if (highlightedState.code && (d.region_code === highlightedState.code || d.code === highlightedState.code)) return true;
-        return (d.state && d.state === highlightedState.name) || (d.region_name && d.region_name === highlightedState.name);
-      });
-      if (!inBase) {
-        const found = sorted.find(d => {
-          if (highlightedState.code && (d.region_code === highlightedState.code || d.code === highlightedState.code)) return true;
-          return (d.state && d.state === highlightedState.name) || (d.region_name && d.region_name === highlightedState.name);
-        });
-        let entryToInsert = null;
-        if (found) entryToInsert = { ...found, rank: found.rank_overall || (sorted.indexOf(found) + 1) };
-        else {
-          const synthetic = data.find(d => {
-            if (highlightedState.code && (d.region_code === highlightedState.code || d.code === highlightedState.code)) return true;
-            return (d.state && d.state === highlightedState.name) || (d.region_name && d.region_name === highlightedState.name);
-          });
-          if (synthetic) entryToInsert = { ...synthetic, rank: synthetic.rank_overall || null };
-          else entryToInsert = { state: highlightedState.name || highlightedState.code, region_code: highlightedState.code || null, avg_epss: 0, rank: null };
-        }
+    // When exporting, ignore selected state highlighting so the chart shows the national top-N
+    const active = exportMode ? null : (highlightedState || selectedState);
+    if (!active) return base;
 
-        if (base.length >= topN) base[base.length - 1] = entryToInsert;
-        else base.push(entryToInsert);
-      }
-    }
+    const selCode = active.code ? String(active.code).toUpperCase() : null;
+    const selName = active.name ? String(active.name).trim().toLowerCase() : null;
+
+    const inBase = base.some(d => {
+      if (!d) return false;
+      const codes = [d.region_code, d.code, d.regionCode, d.region];
+      for (const v of codes) if (v && selCode && String(v).toUpperCase() === selCode) return true;
+      const names = [d.state, d.name, d.region_name, d.regionName];
+      for (const v of names) if (v && selName && String(v).trim().toLowerCase() === selName) return true;
+      return false;
+    });
+
+    if (inBase) return base;
+
+    const found = sortedFull.find(d => {
+      const codes = [d.region_code, d.code, d.regionCode, d.region];
+      for (const v of codes) if (v && selCode && String(v).toUpperCase() === selCode) return true;
+      const names = [d.state, d.name, d.region_name, d.regionName];
+      for (const v of names) if (v && selName && String(v).trim().toLowerCase() === selName) return true;
+      return false;
+    });
+
+    let entryToInsert = null;
+    if (found) entryToInsert = { ...found, rank: found.rank_overall || (sortedFull.indexOf(found) + 1) };
+    else entryToInsert = { state: active.name || active.code, region_code: active.code || null, avg_epss: 0, rank: null };
+
+    if (base.length >= topN) base[base.length - 1] = entryToInsert;
+    else base.push(entryToInsert);
 
     return base;
-  }, [data, topN, highlightedState]);
+  }, [data, topN, highlightedState, selectedState]);
+
+  // Notify PDF exporter when this chart has data ready for capture
+  useEffect(() => {
+    if (Array.isArray(topData) && topData.length > 0) {
+      try {
+        window.dispatchEvent(new CustomEvent('dashboardPDF:chartReady', { detail: { id: 'incident-severity' } }));
+      } catch (e) {}
+    }
+  }, [topData]);
 
   const containerHeight = '100%';
   const barSize = Math.max(14, Math.min(48, Math.floor(300 / Math.max(1, topData.length)))) - 5;
@@ -298,7 +337,7 @@ const StateEpssChart = ({ topN = 10 }) => {
         
       </div>
 
-      <div style={{ width: '100%', height: containerHeight, minHeight: 300, background: 'transparent', borderRadius: 6 }}>
+      <div style={{ width: '100%', height: containerHeight, minHeight: 300, minWidth: 300, background: 'transparent', borderRadius: 6 }}>
         {(!topData || topData.length === 0) ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>No EPSS data available</div>
         ) : (
@@ -348,17 +387,18 @@ const StateEpssChart = ({ topN = 10 }) => {
                 barSize={barSize}
               >
                 {topData.map((entry, i) => {
+                  const active = highlightedState || selectedState;
                   const entryStateName = entry.state || entry.region_name || `entry-${i}`;
                   const entryCode = (entry.region_code || entry.code || (STATE_NAME_TO_CODE && STATE_NAME_TO_CODE[entryStateName])) ? (entry.region_code || entry.code || STATE_NAME_TO_CODE[entryStateName]) : null;
 
-                  const isHighlighted = Boolean(highlightedState && (
-                    (highlightedState.code && entryCode && String(entryCode).toUpperCase() === String(highlightedState.code).toUpperCase()) ||
-                    (highlightedState.name && entryStateName === highlightedState.name)
+                  const isHighlighted = Boolean(active && (
+                    (active.code && entryCode && String(entryCode).toUpperCase() === String(active.code).toUpperCase()) ||
+                    (active.name && entryStateName === active.name)
                   ));
 
-                  const fill = isHighlighted ? '#696868ff' : BAR_BACKGROUND_COLORS[i % BAR_BACKGROUND_COLORS.length];
-                  const stroke = isHighlighted ? '#767575ff' : BAR_BORDER_COLORS[i % BAR_BORDER_COLORS.length];
-                  const strokeWidth = isHighlighted ? 3 : 2;
+                  const fill = isHighlighted ? '#00d9ff' : BAR_BACKGROUND_COLORS[i % BAR_BACKGROUND_COLORS.length];
+                  const stroke = isHighlighted ? '#00d9ff' : BAR_BORDER_COLORS[i % BAR_BORDER_COLORS.length];
+                  const strokeWidth = isHighlighted ? 3 : 1;
 
                   return (
                     <Cell

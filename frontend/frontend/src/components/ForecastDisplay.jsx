@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getLatestForecast } from '../utils/forecastCache';
 import InfoModal from './InfoModal';
+import InfoIcon from './InfoIcon';
 
 const ForecastDisplay = () => {
   const [forecastData, setForecastData] = useState(null);
@@ -227,7 +228,7 @@ const ForecastDisplay = () => {
                       aria-expanded={showCIInfo}
                       onClick={() => setShowCIInfo(true)}
                     >
-                      ℹ️
+                        <InfoIcon size={12} />
                     </button>
                   </th>
                   <th>
@@ -248,7 +249,7 @@ const ForecastDisplay = () => {
                       aria-expanded={showSpikeInfo}
                       onClick={() => setShowSpikeInfo(true)}
                     >
-                      ℹ️
+                        <InfoIcon size={12} />
                     </button>
                   </th>
                   <th>
@@ -269,7 +270,7 @@ const ForecastDisplay = () => {
                       aria-expanded={showConfidenceInfo}
                       onClick={() => setShowConfidenceInfo(true)}
                     >
-                      ℹ️
+                        <InfoIcon size={12} />
                     </button>
                   </th>
                   

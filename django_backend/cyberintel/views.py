@@ -14,7 +14,7 @@ from django.db import connection
 from django.db.models import Count, Sum, Avg
 from django.core.cache import cache
 
-from .models import CveCountsByRegionEpss, CveCountsByRegion
+from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion, NvdDataLimited, CweSoftwareLimited
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
