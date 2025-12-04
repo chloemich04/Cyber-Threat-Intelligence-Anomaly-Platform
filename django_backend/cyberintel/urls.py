@@ -12,9 +12,11 @@ urlpatterns = [
     path('forecast/latest/', get_latest_forecast, name='forecast-latest'),
     path('forecast/charts/', forecast_chart_data, name='forecast-charts'),
     path('heatmap_data/', views.heatmap_data, name='heatmap-data'),
+    path('heatmap/state/<str:region_code>/', views.heatmap_state_detail, name='heatmap-state-detail'),
     path('ranking_data/', views.ranking_bar_chart_data, name='ranking-data'),
     path('epss_chart/', views.epss_chart_data, name='epss-chart'),
     path('internet_chart/', views.isp_chart_data, name='internet-chart'),
+    path('contacts/', views.create_contact, name='contacts-create'),
     path('epss_chart/epss_incidents/<str:region_code>/', views.state_epss_incidents, name='epss-incidents'),
 
 ]

@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
+import { useMetrics, useInsights } from '../context/AppContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const DashboardPDFExport = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [selectedState, setSelectedState] = useState(null);
   const [exportOptions, setExportOptions] = useState({
     includeMetrics: true,
-    includeThreatSummary: true,
     includeInsights: true,
-    includeIncidentSeverity: false,
-    includeTopThreats: false,
-    includeBreachTypes: false,
-    includeVulnerableTech: false,
-    includeAttackVectors: false,
-    includeResponseTimes: false,
+    includeHeatmapDetail: false,
+    includeEPSS: true,
+    includeISP: true,
+    includeCVERankings: true,
   });
 
   const handleCheckboxChange = (option) => {
@@ -23,6 +22,37 @@ const DashboardPDFExport = () => {
       [option]: !prev[option]
     }));
   };
+
+  // Read metrics and insights from app context at component top-level (hooks must be called here)
+  const { metrics } = useMetrics();
+  const { insights } = useInsights();
+
+  // Listen for state selection from heatmap
+  React.useEffect(() => {
+    const handleStateSelected = (e) => {
+      const detail = e.detail || {};
+      setSelectedState({
+        name: detail.name,
+        code: detail.code || detail.region_code,
+        totalCves: detail.total_cves,
+      });
+      // Auto-enable heatmap detail when state is selected
+      setExportOptions(prev => ({ ...prev, includeHeatmapDetail: true }));
+    };
+
+    const handleStateCleared = () => {
+      setSelectedState(null);
+      setExportOptions(prev => ({ ...prev, includeHeatmapDetail: false }));
+    };
+
+    window.addEventListener('stateSelected', handleStateSelected);
+    window.addEventListener('stateCleared', handleStateCleared);
+
+    return () => {
+      window.removeEventListener('stateSelected', handleStateSelected);
+      window.removeEventListener('stateCleared', handleStateCleared);
+    };
+  }, []);
 
   const captureChart = async (elementId) => {
     const element = document.querySelector(`[data-dashboard-chart-id="${elementId}"]`);
@@ -34,7 +64,7 @@ const DashboardPDFExport = () => {
     try {
       const canvas = await html2canvas(element, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: null,
         logging: false,
         useCORS: true,
       });
@@ -51,47 +81,118 @@ const DashboardPDFExport = () => {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
+      const margin = 20;
       const contentWidth = pageWidth - (2 * margin);
       let yPosition = margin;
+      
+      // Color palette from app (converted to RGB)
+      const colors = {
+        bg: [15, 23, 42],           // --bg: #0f172a
+        panel: [11, 34, 58],        // --panel: #0b223a
+        text: [229, 231, 235],      // --text: #e5e7eb
+        muted: [148, 163, 184],     // --muted: #94a3b8
+        accent: [56, 189, 248],     // --accent: #38bdf8
+        accent2: [34, 197, 94],     // --accent-2: #22c55e
+        warn: [245, 158, 11],       // --warn: #f59e0b
+        danger: [239, 68, 68],      // --danger: #ef4444
+        border: [31, 41, 55],       // --border: #1f2937
+      };
+
+      // Set dark background
+      pdf.setFillColor(...colors.bg);
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
       // Helper function to add new page if needed
       const checkPageBreak = (requiredSpace) => {
         if (yPosition + requiredSpace > pageHeight - margin) {
           pdf.addPage();
+          // Add dark background to new page
+          pdf.setFillColor(...colors.bg);
+          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
           yPosition = margin;
           return true;
         }
         return false;
       };
 
-      // Header
-      pdf.setFontSize(20);
-      pdf.setTextColor(37, 99, 235);
-      pdf.text('Cyber Threat Intelligence Dashboard Report', margin, yPosition);
-      yPosition += 10;
+      // Header with gradient effect
+      pdf.setFillColor(56, 189, 248); // Accent color
+      pdf.rect(0, 0, pageWidth, 15, 'F');
+      
+      pdf.setFontSize(24);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('ThreatLens Dashboard Report', margin, yPosition + 5);
+      yPosition += 20;
 
       pdf.setFontSize(10);
-      pdf.setTextColor(100, 100, 100);
+      pdf.setTextColor(...colors.muted);
+      pdf.setFont('helvetica', 'normal');
       pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, yPosition);
+      
+      // Add decorative line
+      pdf.setDrawColor(...colors.accent);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, yPosition + 3, pageWidth - margin, yPosition + 3);
       yPosition += 15;
 
-      // Executive Summary
-      pdf.setFontSize(14);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('Executive Summary', margin, yPosition);
-      yPosition += 8;
+      // Executive Summary - dynamically built based on selected sections
+      checkPageBreak(35);
+      
+      // Section header with background
+      pdf.setFillColor(...colors.panel);
+      pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+      
+      pdf.setFontSize(16);
+      pdf.setTextColor(...colors.accent);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Executive Summary', margin + 3, yPosition + 5);
+      yPosition += 14;
 
-      pdf.setFontSize(10);
-      pdf.setTextColor(60, 60, 60);
-      const summary = 'This report provides comprehensive insights into current cyber threat landscape, including historical threat data, incident metrics, and key vulnerability trends.';
-      const lines = pdf.splitTextToSize(summary, contentWidth);
+      pdf.setFontSize(11);
+      pdf.setTextColor(...colors.text);
+      pdf.setFont('helvetica', 'normal');
+      
+      // Build dynamic summary based on selected export options
+      const summaryParts = [];
+      if (exportOptions.includeMetrics) {
+        summaryParts.push('key performance metrics');
+      }
+      if (exportOptions.includeInsights) {
+        summaryParts.push('threat intelligence insights');
+      }
+      const chartParts = [];
+      if (exportOptions.includeEPSS) {
+        chartParts.push('EPSS vulnerability scores');
+      }
+      if (exportOptions.includeISP) {
+        chartParts.push('ISP threat distribution');
+      }
+      if (exportOptions.includeCVERankings) {
+        chartParts.push('CVE rankings');
+      }
+      if (chartParts.length > 0) {
+        summaryParts.push(`threat analytics including ${chartParts.join(', ')}`);
+      }
+      
+      let summary = 'This report provides ';
+      if (summaryParts.length === 0) {
+        summary += 'a snapshot of the current cyber threat landscape.';
+      } else if (summaryParts.length === 1) {
+        summary += summaryParts[0] + ' for the current cyber threat landscape.';
+      } else if (summaryParts.length === 2) {
+        summary += summaryParts.join(' and ') + ' for the current cyber threat landscape.';
+      } else {
+        summary += summaryParts.slice(0, -1).join(', ') + ', and ' + summaryParts[summaryParts.length - 1] + ' for the current cyber threat landscape.';
+      }
+      
+      const lines = pdf.splitTextToSize(summary, contentWidth - 6);
       if (Array.isArray(lines)) {
         lines.forEach(line => {
           if (line && typeof line === 'string') {
-            checkPageBreak(6);
-            pdf.text(line, margin, yPosition);
-            yPosition += 6;
+            checkPageBreak(7);
+            pdf.text(line, margin + 3, yPosition);
+            yPosition += 7;
           }
         });
       }
@@ -101,203 +202,288 @@ const DashboardPDFExport = () => {
       if (exportOptions.includeMetrics) {
         checkPageBreak(50);
         
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Key Metrics', margin, yPosition);
-        yPosition += 10;
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
+        pdf.setFontSize(16);
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Key Metrics', margin + 3, yPosition + 5);
+        yPosition += 16;
 
-        const metrics = [
-          ['Total Cyber Incidents:', '—'],
-          ['Average Loss / Incident:', '—'],
-          ['Exposure Score (0-100):', '—'],
-          ['KEV / Active Exploits:', '—'],
+        // Metrics in cards - use metrics from application context
+        const metricsData = metrics || {};
+        const metricsArray = [
+          { label: 'Total Cyber Incidents', value: (metricsData.totalIncidents != null) ? metricsData.totalIncidents.toLocaleString() : '—' },
+          { label: 'Exposure Score (0–100)', value: (metricsData.exposureScore != null) ? String(metricsData.exposureScore) : '—' },
+          { label: 'Top-5 State Concentration (%)', value: (metricsData.top5ConcentrationPercent != null) ? `${metricsData.top5ConcentrationPercent}%` : '—' },
+          { label: 'Active States (%)', value: (metricsData.activeStatesPercent != null) ? `${metricsData.activeStatesPercent}%` : '—' },
         ];
 
-        pdf.setFontSize(10);
-        metrics.forEach(([label, value]) => {
-          checkPageBreak(7);
-          pdf.setFont(undefined, 'bold');
-          if (label && typeof label === 'string') {
-            pdf.text(label, margin, yPosition);
+        metricsArray.forEach((metric, idx) => {
+          if (idx % 2 === 0 && idx > 0) {
+            yPosition += 22;
+            checkPageBreak(22);
           }
-          pdf.setFont(undefined, 'normal');
-          if (value && typeof value === 'string') {
-            pdf.text(value, margin + 70, yPosition);
+          
+          const xStart = margin + (idx % 2) * (contentWidth / 2 + 5);
+          const cardWidth = (contentWidth / 2) - 5;
+          
+          // Metric card with gradient background
+          pdf.setFillColor(17, 24, 39);
+          pdf.roundedRect(xStart, yPosition, cardWidth, 18, 2, 2, 'F');
+          
+          // Card border
+          pdf.setDrawColor(...colors.border);
+          pdf.setLineWidth(0.3);
+          pdf.roundedRect(xStart, yPosition, cardWidth, 18, 2, 2, 'D');
+          
+          // Label
+          pdf.setFontSize(10);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'normal');
+          if (metric.label && typeof metric.label === 'string') {
+            pdf.text(metric.label, xStart + 3, yPosition + 6);
           }
-          yPosition += 7;
+          
+          // Value
+          pdf.setFontSize(14);
+          pdf.setTextColor(...colors.accent);
+          pdf.setFont('helvetica', 'bold');
+          if (metric.value && typeof metric.value === 'string') {
+            pdf.text(metric.value, xStart + 3, yPosition + 14);
+          }
         });
+        
+        yPosition += 24;
+      }
+
+      // Insights - fetch from context at runtime inside generatePDF
+      if (exportOptions.includeInsights) {
+        checkPageBreak(45);
+        
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
+        pdf.setFontSize(16);
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Insights', margin + 3, yPosition + 5);
+        yPosition += 16;
+
+        pdf.setFontSize(11);
+        pdf.setTextColor(...colors.text);
+        pdf.setFont('helvetica', 'normal');
+        
+        // Highest Rate
+        checkPageBreak(7);
+        const highestRate = insights?.highestRate || '—';
+        pdf.text(`• Highest Rate: ${highestRate}`, margin + 5, yPosition);
+        yPosition += 7;
+        
+        // Lowest Rate(s)
+        checkPageBreak(7);
+        const lowestRates = Array.isArray(insights?.lowestRates) && insights.lowestRates.length ? insights.lowestRates.join(', ') : (insights?.lowestRate || '—');
+        pdf.text(`• Lowest Rate: ${lowestRates}`, margin + 5, yPosition);
+        yPosition += 7;
+        
+        // Top Threat Types - only include if not empty
+        const topThreatTypes = Array.isArray(insights?.topThreatTypes) && insights.topThreatTypes.length ? insights.topThreatTypes.join(', ') : null;
+        if (topThreatTypes) {
+          checkPageBreak(7);
+          pdf.text(`• Top Threat Types: ${topThreatTypes}`, margin + 5, yPosition);
+          yPosition += 7;
+        }
+        
+        // Notes - only include if not empty
+        if (insights?.notes && insights.notes.trim() !== '') {
+          checkPageBreak(7);
+          pdf.text(`• Notes: ${insights.notes}`, margin + 5, yPosition);
+          yPosition += 7;
+        }
+        
         yPosition += 10;
       }
 
-      // Threat Summary Table
-      if (exportOptions.includeThreatSummary) {
+      // State-Specific Threat Activity (if state selected)
+      if (exportOptions.includeHeatmapDetail && selectedState) {
         checkPageBreak(80);
         
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Threat Summary', margin, yPosition);
-        yPosition += 10;
-
-        // Table with borders
-        const colWidths = [45, 30, 30, 30, 30];
-        const headers = ['Category', 'Incidents', '% Change', 'Avg Loss', 'Status'];
-        const tableWidth = colWidths.reduce((sum, w) => sum + w, 0);
-        
-        // Draw table header background
-        pdf.setFillColor(240, 240, 240);
-        pdf.rect(margin, yPosition - 4, tableWidth, 6, 'F');
-        
-        // Draw header borders
-        pdf.setDrawColor(150, 150, 150);
-        pdf.setLineWidth(0.3);
-        
-        let xPos = margin;
-        
-        // Header text
-        pdf.setFontSize(9);
-        pdf.setFont(undefined, 'bold');
-        
-        headers.forEach((header, i) => {
-          // Vertical lines
-          pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
-          if (header && typeof header === 'string') {
-            pdf.text(header, xPos + 2, yPosition);
-          }
-          xPos += colWidths[i];
-        });
-        // Last vertical line
-        pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
-        
-        // Horizontal lines for header
-        pdf.line(margin, yPosition - 4, margin + tableWidth, yPosition - 4);
-        pdf.line(margin, yPosition + 2, margin + tableWidth, yPosition + 2);
-        
-        yPosition += 7;
-
-        // Table data with borders
-        const threatData = [
-          ['Phishing', '1,245', '+12%', '$8,400', 'Rising'],
-          ['Ransomware', '530', '+4%', '$58,000', 'Stable'],
-          ['Malware', '890', '-6%', '$11,200', 'Falling'],
-          ['DDoS', '210', '+1%', '$5,600', 'Stable'],
-          ['Credential Stuffing', '430', '+9%', '$3,700', 'Rising'],
-        ];
-
-        pdf.setFont(undefined, 'normal');
-        threatData.forEach(row => {
-          checkPageBreak(7);
-          xPos = margin;
-          row.forEach((cell, i) => {
-            // Vertical line
-            pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
-            if (cell && typeof cell === 'string') {
-              pdf.text(cell, xPos + 2, yPosition);
+        // Fetch state details
+        let stateDetails = null;
+        if (selectedState.code) {
+          try {
+            const res = await fetch(`http://127.0.0.1:8000/api/heatmap/state/${selectedState.code}/`);
+            if (res.ok) {
+              stateDetails = await res.json();
             }
-            xPos += colWidths[i];
-          });
-          // Last vertical line
-          pdf.line(xPos, yPosition - 4, xPos, yPosition + 2);
-          // Horizontal line
-          pdf.line(margin, yPosition + 2, margin + tableWidth, yPosition + 2);
-          yPosition += 6;
-        });
-        yPosition += 10;
-      }
-
-      // Insights
-      if (exportOptions.includeInsights) {
-        checkPageBreak(40);
-        
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Key Insights', margin, yPosition);
-        yPosition += 10;
-
-        const insights = [
-          'Highest Rate: State A',
-          'Lowest Rate: State B',
-          'Top Threat Types: Ransomware, Phishing, DDoS',
-        ];
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(60, 60, 60);
-        insights.forEach(insight => {
-          checkPageBreak(7);
-          if (insight && typeof insight === 'string') {
-            pdf.text(`• ${insight}`, margin + 5, yPosition);
+          } catch (err) {
+            console.error('Error fetching state details for PDF:', err);
           }
+        }
+
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
+        pdf.setFontSize(16);
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`Threat Activity: ${selectedState.name}`, margin + 3, yPosition + 5);
+        yPosition += 16;
+
+        if (stateDetails) {
+          pdf.setFontSize(11);
+          pdf.setTextColor(...colors.text);
+          pdf.setFont('helvetica', 'normal');
+          
+          // Total CVEs
+          checkPageBreak(7);
+          pdf.text(`Total CVEs: ${stateDetails.total_cves || selectedState.totalCves || '—'}`, margin + 5, yPosition);
+          yPosition += 10;
+          
+          // Top CVEs
+          if (stateDetails.top_cves && stateDetails.top_cves.length > 0) {
+            checkPageBreak(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Top CVEs:', margin + 5, yPosition);
+            yPosition += 7;
+            
+            pdf.setFont('helvetica', 'normal');
+            stateDetails.top_cves.slice(0, 5).forEach((cve, idx) => {
+              checkPageBreak(6);
+              const cveId = cve.cve_id || cve.id || (Array.isArray(cve) ? cve[0] : null) || 'Unknown';
+              const occurrences = cve.occurrences || cve.occ || 0;
+              const cveText = `${cveId} (${occurrences} reports)`;
+              pdf.text(`  • ${cveText}`, margin + 7, yPosition);
+              yPosition += 6;
+            });
+            yPosition += 4;
+          }
+          
+          // Recent exploit reports
+          if (stateDetails.exploit_count != null) {
+            checkPageBreak(7);
+            pdf.text(`Recent exploit reports: ${stateDetails.exploit_count}`, margin + 5, yPosition);
+            yPosition += 7;
+          }
+          
+          
+        } else {
+          pdf.setFontSize(11);
+          pdf.setTextColor(...colors.muted);
+          pdf.setFont('helvetica', 'italic');
+          pdf.text('State details unavailable', margin + 5, yPosition);
           yPosition += 7;
-        });
+        }
+        
         yPosition += 10;
       }
 
-      // Capture and include selected charts in 2-column layout
+      // Capture and include selected charts - match dashboard order
       const chartConfigs = [
-        { id: 'incident-severity', option: 'includeIncidentSeverity', title: 'Incident Severity Distribution' },
-        { id: 'top-threats', option: 'includeTopThreats', title: 'Top Threat Types' },
-        { id: 'breach-types', option: 'includeBreachTypes', title: 'Breach Type Distribution' },
-        { id: 'vulnerable-tech', option: 'includeVulnerableTech', title: 'Top Vulnerable Technologies' },
-        { id: 'attack-vectors', option: 'includeAttackVectors', title: 'Attack Vector Trends' },
-        { id: 'response-times', option: 'includeResponseTimes', title: 'Incident Response Times' },
+        { id: 'incident-severity', option: 'includeEPSS', title: 'Exploit Probability Score (EPSS)' },
+        { id: 'internet-provider', option: 'includeISP', title: 'Internet Provider Rankings' },
+        { id: 'vulnerable-tech', option: 'includeCVERankings', title: 'CVE Rankings' },
       ];
 
       const selectedCharts = chartConfigs.filter(chart => exportOptions[chart.option]);
       
       if (selectedCharts.length > 0) {
-        checkPageBreak(40);
+        checkPageBreak(45);
+        
+        // Section header with background
+        pdf.setFillColor(...colors.panel);
+        pdf.roundedRect(margin, yPosition - 2, contentWidth, 10, 2, 2, 'F');
+        
         pdf.setFontSize(16);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('Historical Analytics Charts', margin, yPosition);
-        yPosition += 12;
+        pdf.setTextColor(...colors.accent);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Threat Analytics', margin + 3, yPosition + 5);
+        yPosition += 18;
       }
 
-      // Process charts in pairs for 2-column layout
-      for (let i = 0; i < selectedCharts.length; i += 2) {
-        const leftChart = selectedCharts[i];
-        const rightChart = selectedCharts[i + 1];
-        
-        checkPageBreak(90);
-        
-        const chartWidth = (contentWidth - 10) / 2; // 10mm gap between charts
-        const chartHeight = 70; // Fixed height for consistency
-        
-        // Left chart
-        const leftImage = await captureChart(leftChart.id);
-        pdf.setFontSize(11);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(leftChart.title, margin, yPosition);
-        
-        if (leftImage) {
-          pdf.addImage(leftImage, 'PNG', margin, yPosition + 3, chartWidth, chartHeight);
-        } else {
-          pdf.setFontSize(9);
-          pdf.setTextColor(150, 150, 150);
-          pdf.text('Chart not available or coming soon', margin + 5, yPosition + 35);
-        }
-        
-        // Right chart (if exists)
-        if (rightChart) {
-          const rightImage = await captureChart(rightChart.id);
-          pdf.setFontSize(11);
-          pdf.setTextColor(0, 0, 0);
-          pdf.text(rightChart.title, margin + chartWidth + 10, yPosition);
-          
-          if (rightImage) {
-            pdf.addImage(rightImage, 'PNG', margin + chartWidth + 10, yPosition + 3, chartWidth, chartHeight);
-          } else {
+      // Process all charts using a fixed chart width per image so layout
+      // remains consistent regardless of how many charts are selected.
+      if (selectedCharts.length > 0) {
+        // fixed sizes in mm for PDF placement
+        const gap = 5; // Gap between charts in mm
+        const fixedChartWidth = 55; // mm per chart
+        const fixedChartHeight = 50; // mm per chart image
+
+        // compute how many columns fit in contentWidth
+        const columns = Math.max(1, Math.floor((contentWidth + gap) / (fixedChartWidth + gap)));
+        const rows = Math.ceil(selectedCharts.length / columns);
+
+        // iterate rows and columns, rendering chart images in a grid
+        for (let r = 0; r < rows; r++) {
+          // ensure there is enough vertical space for this row (title + chart)
+          const rowHeight = 8 + fixedChartHeight + 6; // title box + chart + padding
+          checkPageBreak(rowHeight + 6);
+
+          for (let c = 0; c < columns; c++) {
+            const idx = r * columns + c;
+            if (idx >= selectedCharts.length) break;
+            const chart = selectedCharts[idx];
+
+            const xPos = margin + c * (fixedChartWidth + gap);
+
+            // Chart title with background
+            pdf.setFillColor(...colors.panel);
+            pdf.roundedRect(xPos, yPosition, fixedChartWidth, 8, 1, 1, 'F');
             pdf.setFontSize(9);
-            pdf.setTextColor(150, 150, 150);
-            pdf.text('Chart not available or coming soon', margin + chartWidth + 15, yPosition + 35);
+            pdf.setTextColor(...colors.text);
+            pdf.setFont('helvetica', 'bold');
+
+            // Truncate title if too long for smaller width
+            const maxTitleWidth = fixedChartWidth - 4;
+            let titleText = chart.title;
+            while (pdf.getTextWidth(titleText) > maxTitleWidth && titleText.length > 10) {
+              titleText = titleText.substring(0, titleText.length - 1);
+            }
+            if (titleText !== chart.title) titleText += '...';
+            pdf.text(titleText, xPos + 2, yPosition + 5);
+
+            // Capture and insert the image for this chart. Compute desired pixel
+            // size from mm dims so exported images have good resolution.
+            const pxPerMm = 96 / 25.4; // approximate screen px per mm
+            const exportScale = 3; // render at ~3x for crisp images
+            const targetPxW = Math.max(120, Math.round(fixedChartWidth * pxPerMm * exportScale));
+            const targetPxH = Math.max(120, Math.round(fixedChartHeight * pxPerMm * exportScale));
+            const chartImage = await captureChart(chart.id, targetPxW, targetPxH);
+            if (chartImage) {
+              pdf.addImage(chartImage, 'PNG', xPos, yPosition + 9, fixedChartWidth, fixedChartHeight);
+            } else {
+              pdf.setFillColor(...colors.panel);
+              pdf.roundedRect(xPos, yPosition + 9, fixedChartWidth, fixedChartHeight, 2, 2, 'F');
+              pdf.setDrawColor(...colors.border);
+              pdf.setLineWidth(0.5);
+              pdf.setLineDash([2, 2]);
+              pdf.roundedRect(xPos, yPosition + 9, fixedChartWidth, fixedChartHeight, 2, 2, 'D');
+              pdf.setLineDash([]);
+
+              pdf.setFontSize(8);
+              pdf.setTextColor(...colors.muted);
+              pdf.setFont('helvetica', 'italic');
+              pdf.text('Chart not available', xPos + (fixedChartWidth / 2), yPosition + (fixedChartHeight / 2), { align: 'center' });
+            }
           }
+
+          // move to next row
+          yPosition += 8 + fixedChartHeight + 10;
         }
-        
-        yPosition += chartHeight + 15;
       }
 
       // Footer on last page
+      pdf.setFillColor(56, 189, 248); // Accent color bar
+      pdf.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+      
       pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('© 2025 CTI Dashboard — Historical Threat Analytics', margin, pageHeight - 10);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('© 2025 ThreatLens', pageWidth / 2, pageHeight - 5, { align: 'center' });
 
       // Save the PDF
       const filename = `dashboard-report-${new Date().toISOString().split('T')[0]}.pdf`;
@@ -349,16 +535,7 @@ const DashboardPDFExport = () => {
                     checked={exportOptions.includeMetrics}
                     onChange={() => handleCheckboxChange('includeMetrics')}
                   />
-                  <span>Key Metrics Summary</span>
-                </label>
-
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeThreatSummary}
-                    onChange={() => handleCheckboxChange('includeThreatSummary')}
-                  />
-                  <span>Threat Summary Table</span>
+                  <span>Key Metrics</span>
                 </label>
 
                 <label className="checkbox-label">
@@ -367,77 +544,55 @@ const DashboardPDFExport = () => {
                     checked={exportOptions.includeInsights}
                     onChange={() => handleCheckboxChange('includeInsights')}
                   />
-                  <span>Key Insights</span>
+                  <span>Insights</span>
                 </label>
 
+                {selectedState && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.includeHeatmapDetail}
+                      onChange={() => handleCheckboxChange('includeHeatmapDetail')}
+                    />
+                    <span>Threat Activity: {selectedState.name}</span>
+                  </label>
+                )}
+
                 <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontWeight: '600' }}>
-                  Historical Analytics Charts:
+                  Threat Analytics Charts:
                 </div>
 
                 <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
                   <input
                     type="checkbox"
-                    checked={exportOptions.includeIncidentSeverity}
-                    onChange={() => handleCheckboxChange('includeIncidentSeverity')}
+                    checked={exportOptions.includeEPSS}
+                    onChange={() => handleCheckboxChange('includeEPSS')}
                   />
-                  <span>Incident Severity Distribution</span>
+                  <span>Exploit Probability Score (EPSS)</span>
                 </label>
 
                 <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
                   <input
                     type="checkbox"
-                    checked={exportOptions.includeTopThreats}
-                    onChange={() => handleCheckboxChange('includeTopThreats')}
+                    checked={exportOptions.includeISP}
+                    onChange={() => handleCheckboxChange('includeISP')}
                   />
-                  <span>Top Threat Types</span>
+                  <span>Internet Provider Rankings</span>
                 </label>
 
                 <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
                   <input
                     type="checkbox"
-                    checked={exportOptions.includeBreachTypes}
-                    onChange={() => handleCheckboxChange('includeBreachTypes')}
+                    checked={exportOptions.includeCVERankings}
+                    onChange={() => handleCheckboxChange('includeCVERankings')}
                   />
-                  <span>Breach Type Distribution</span>
-                </label>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeVulnerableTech}
-                    onChange={() => handleCheckboxChange('includeVulnerableTech')}
-                  />
-                  <span>Top Vulnerable Technologies</span>
-                </label>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeAttackVectors}
-                    onChange={() => handleCheckboxChange('includeAttackVectors')}
-                  />
-                  <span>Attack Vector Trends</span>
-                </label>
-
-                <label className="checkbox-label" style={{ marginLeft: '1rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeResponseTimes}
-                    onChange={() => handleCheckboxChange('includeResponseTimes')}
-                  />
-                  <span>Incident Response Times</span>
+                  <span>CVE Rankings</span>
                 </label>
               </div>
             </div>
 
             <div className="modal-footer">
-              <button 
-                className="button secondary" 
-                onClick={() => setShowModal(false)}
-                disabled={isExporting}
-              >
-                Cancel
-              </button>
+              
               <button 
                 className="button primary" 
                 onClick={generatePDF}

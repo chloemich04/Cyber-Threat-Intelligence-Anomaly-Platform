@@ -169,3 +169,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# LLM / Forecasting controls (tunable defaults)
+LLM_MAX_INPUT_TOKENS = 250
+LLM_EXPECTED_OUTPUT_TOKENS = 120
+LLM_MAX_RESPONSE_TOKENS = 1000
+LLM_RECENT_WEEKS_KEEP = 4
+LLM_PRICE_PER_1K = 0.03
+LLM_INCLUDE_EXPLANATION = False
