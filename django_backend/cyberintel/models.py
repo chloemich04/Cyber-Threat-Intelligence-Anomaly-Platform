@@ -82,3 +82,20 @@ class CweSoftwareLimited(models.Model):
     class Meta:
         managed = False
         db_table = 'cwe_software_development'
+
+
+class Contact(models.Model):
+    """
+    Stores submissions from the frontend Contact Us form.
+    """
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Contact({self.name} <{self.email}>)"
+
+    class Meta:
+        ordering = ['-created_at']

@@ -31,7 +31,7 @@ const AboutUs = () => {
             <div className="team-member">
               <div className="member-avatar">
                 <img 
-                  src="/images/team/DSC_0210.JPG" 
+                  src="/images/team/Dhruv.png" 
                   alt="Dhruv Patel"
                   className="member-photo"
                   onError={(e) => {
@@ -90,7 +90,15 @@ const AboutUs = () => {
             </div>
             <div className="team-member">
               <div className="member-avatar">
-                <div className="avatar-placeholder">👤</div>
+                <img 
+                  src="/images/team/Akhila.png" 
+                  alt="Akhila Dhatrak"
+                  className="member-photo"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
               </div>
               <h3 className="member-name">Akhila Dhatrak</h3>
               <p className="member-role">Data Analyst</p>

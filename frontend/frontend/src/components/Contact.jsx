@@ -41,24 +41,32 @@ const Contact = () => {
             
             <div className="contact-methods">
               <div className="contact-method">
-                <div className="method-icon">📧</div>
+                <div className="method-icon">🔗</div>
                 <div className="method-content">
-                  <h3>Email</h3>
-                  <p>For general inquiries and support</p>
-                  <a href="mailto:contact@ctidashboard.edu" className="contact-link">
-                    contact@ctidashboard.edu
-                  </a>
-                </div>
-              </div>
-
-              <div className="contact-method">
-                <div className="method-icon">🎓</div>
-                <div className="method-content">
-                  <h3>Academic Contact</h3>
-                  <p>For research collaboration and academic inquiries</p>
-                  <a href="mailto:research@ctidashboard.edu" className="contact-link">
-                    research@ctidashboard.edu
-                  </a>
+                  <h3>LinkedIn</h3>
+                  <p>Connect with our team on LinkedIn</p>
+                  <ul className="linkedin-list">
+                    <li>
+                      <a href="https://www.linkedin.com/in/lydia-martin-4117b734a/" target="_blank" rel="noopener noreferrer" className="contact-link">
+                        Lydia Martin
+                      </a>
+                    </li>
+                    <li>
+                      <a href="https://www.linkedin.com/in/chloe-robinson-a90b3632a/" target="_blank" rel="noopener noreferrer" className="contact-link">
+                        Chloe Robinson
+                      </a>
+                    </li>
+                    <li>
+                      <a href="https://www.linkedin.com/in/akhila-dhatrak-a23a49230/" target="_blank" rel="noopener noreferrer" className="contact-link">
+                        Akhila Dhatrak
+                      </a>
+                    </li>
+                    <li>
+                      <a href="https://www.linkedin.com/in/dhruv-patel-3b4041305/?utm_source=share_via&utm_content=profile&utm_medium=member_ios" target="_blank" rel="noopener noreferrer" className="contact-link">
+                        Dhruv Patel
+                      </a>
+                    </li>
+                  </ul>
                 </div>
               </div>
 
@@ -67,7 +75,7 @@ const Contact = () => {
                 <div className="method-content">
                   <h3>University</h3>
                   <p>Information Studies Department</p>
-                  <span className="contact-detail">[Your University Name]</span>
+                  <span className="contact-detail">University of Louisiana at Lafayette</span>
                 </div>
               </div>
 
@@ -75,7 +83,7 @@ const Contact = () => {
                 <div className="method-icon">📚</div>
                 <div className="method-content">
                   <h3>Course</h3>
-                  <p>INFX 490 - Final Project</p>
+                  <p>INFX/CMPS 490 - Final Project</p>
                   <span className="contact-detail">2025 Academic Year</span>
                 </div>
               </div>
@@ -115,26 +123,6 @@ const Contact = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="subject" className="form-label">Subject *</label>
-                <select
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  className="form-select"
-                  required
-                >
-                  <option value="">Select a subject</option>
-                  <option value="general">General Inquiry</option>
-                  <option value="technical">Technical Support</option>
-                  <option value="collaboration">Research Collaboration</option>
-                  <option value="feedback">Platform Feedback</option>
-                  <option value="bug-report">Bug Report</option>
-                  <option value="feature-request">Feature Request</option>
-                </select>
-              </div>
-
-              <div className="form-group">
                 <label htmlFor="message" className="form-label">Message *</label>
                 <textarea
                   id="message"
@@ -167,13 +155,6 @@ const Contact = () => {
                 </p>
               </div>
 
-              <div className="faq-item">
-                <h3 className="faq-question">Is this a real production system?</h3>
-                <p className="faq-answer">
-                  This is a demonstration platform created for the INFX 490 final project. It showcases 
-                  various cybersecurity visualization and analysis capabilities using sample data.
-                </p>
-              </div>
 
               <div className="faq-item">
                 <h3 className="faq-question">How can I contribute to this project?</h3>

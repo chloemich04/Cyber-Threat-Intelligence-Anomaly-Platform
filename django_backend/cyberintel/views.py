@@ -14,7 +14,10 @@ from django.db import connection
 from django.db.models import Count, Sum, Avg
 from django.core.cache import cache
 
-from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion, NvdDataLimited, CweSoftwareLimited
+from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion, NvdDataLimited, CweSoftwareLimited, Contact
+from .serializers import ContactSerializer
+import logging
+import re
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -593,4 +596,55 @@ def get_latest_forecast(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+
+@api_view(['POST'])
+def create_contact(request):
+    """
+    Accept a Contact Us submission and persist it to the database.
+    POST /api/contacts/
+    Body: { "name": "", "email": "", "message": "" }
+    """
+    try:
+        # Basic per-IP rate limiting to reduce abuse
+        xff = request.META.get('HTTP_X_FORWARDED_FOR')
+        if xff:
+            client_ip = xff.split(',')[0].strip()
+        else:
+            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+
+        rl_key = f"contact_rl:{client_ip}"
+        try:
+            current = cache.get(rl_key, 0) or 0
+        except Exception:
+            current = 0
+
+        # Allow up to 5 submissions per hour per IP by default
+        if current >= 5:
+            logging.warning(f"Rate limit hit for contact submissions from {client_ip}")
+            retry_after = 3600
+            return Response({'error': 'Rate limit exceeded', 'retry_after_seconds': retry_after}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        serializer = ContactSerializer(data=request.data)
+        if serializer.is_valid():
+            contact = serializer.save()
+            # increment counter
+            try:
+                cache.set(rl_key, current + 1, timeout=3600)
+            except Exception:
+                logging.exception("Could not set rate limit cache key")
+            return Response(ContactSerializer(contact).data, status=status.HTTP_201_CREATED)
+        else:
+            # Log suspicious content patterns for audit
+            try:
+                combined = " ".join([str(v) for v in request.data.values()])
+                if re.search(r"<script|javascript:|onerror=|onload=|;--|\b(drop|delete|insert|update|truncate|alter|exec|declare)\b", combined, re.I):
+                    logging.warning(f"Rejected contact submission (suspicious patterns) from {client_ip}: {combined}")
+            except Exception:
+                pass
+            return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logging.exception("Unhandled error in create_contact")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
