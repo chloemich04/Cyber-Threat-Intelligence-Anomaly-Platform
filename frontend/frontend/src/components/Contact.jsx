@@ -45,26 +45,42 @@ const Contact = () => {
                 <div className="method-content">
                   <h3>LinkedIn</h3>
                   <p>Connect with our team on LinkedIn</p>
-                  <ul className="linkedin-list">
+                  <ul className="linkedin-list" style =  {{alignItems: 'start', paddingLeft: 0}}>
                     <li>
-                      <a href="https://www.linkedin.com/in/lydia-martin-4117b734a/" target="_blank" rel="noopener noreferrer" className="contact-link">
-                        Lydia Martin
+                      <a href="https://www.linkedin.com/in/lydia-martin-4117b734a/" target="_blank" rel="noopener noreferrer" className="contact-link linkedin-person">
+                        <img src="/images/team/lydia-profile.png" alt="Lydia Martin" className="linkedin-avatar" loading="lazy" />
+                        <div className="linkedin-meta">
+                          <div className="linkedin-name" style={{fontSize: '16px'}}>Lydia Martin</div>
+                        </div>
                       </a>
+                      
                     </li>
                     <li>
-                      <a href="https://www.linkedin.com/in/chloe-robinson-a90b3632a/" target="_blank" rel="noopener noreferrer" className="contact-link">
-                        Chloe Robinson
+                      <a href="https://www.linkedin.com/in/chloe-robinson-a90b3632a/" target="_blank" rel="noopener noreferrer" className="contact-link linkedin-person">
+                        <img src="/images/team/chloe-robinson.jpg" alt="Chloe Robinson" className="linkedin-avatar" loading="lazy" />
+                        <div className="linkedin-meta">
+                          <div className="linkedin-name" style={{fontSize: '16px'}}>Chloe Robinson</div>
+                        </div>
                       </a>
+                      
                     </li>
                     <li>
-                      <a href="https://www.linkedin.com/in/akhila-dhatrak-a23a49230/" target="_blank" rel="noopener noreferrer" className="contact-link">
-                        Akhila Dhatrak
+                      <a href="https://www.linkedin.com/in/akhila-dhatrak-a23a49230/" target="_blank" rel="noopener noreferrer" className="contact-link linkedin-person">
+                        <img src="/images/team/Akhila.png" alt="Akhila Dhatrak" className="linkedin-avatar" loading="lazy" />
+                        <div className="linkedin-meta">
+                          <div className="linkedin-name" style={{fontSize: '16px'}}>Akhila Dhatrak</div>
+                        </div>
                       </a>
+                      
                     </li>
                     <li>
-                      <a href="https://www.linkedin.com/in/dhruv-patel-3b4041305/?utm_source=share_via&utm_content=profile&utm_medium=member_ios" target="_blank" rel="noopener noreferrer" className="contact-link">
-                        Dhruv Patel
+                      <a href="https://www.linkedin.com/in/dhruv-patel-3b4041305/?utm_source=share_via&utm_content=profile&utm_medium=member_ios" target="_blank" rel="noopener noreferrer" className="contact-link linkedin-person">
+                        <img src="/images/team/Dhruv.png" alt="Dhruv Patel" className="linkedin-avatar" loading="lazy" />
+                        <div className="linkedin-meta">
+                          <div className="linkedin-name" style={{fontSize: '16px'}}>Dhruv Patel</div>
+                        </div>
                       </a>
+                      
                     </li>
                   </ul>
                 </div>
@@ -74,19 +90,12 @@ const Contact = () => {
                 <div className="method-icon">🏢</div>
                 <div className="method-content">
                   <h3>University</h3>
-                  <p>Information Studies Department</p>
-                  <span className="contact-detail">University of Louisiana at Lafayette</span>
+
+                  <a href="https://www.louisiana.edu/" target="_blank" rel="noopener noreferrer" className="contact-detail">University of Louisiana at Lafayette</a>
                 </div>
               </div>
 
-              <div className="contact-method">
-                <div className="method-icon">📚</div>
-                <div className="method-content">
-                  <h3>Course</h3>
-                  <p>INFX/CMPS 490 - Final Project</p>
-                  <span className="contact-detail">2025 Academic Year</span>
-                </div>
-              </div>
+              
             </div>
           </section>
 

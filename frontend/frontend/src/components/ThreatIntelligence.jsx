@@ -149,11 +149,12 @@ export default function ThreatIntelligence() {
 
   return (
     <>
-      <header>
-        <div className="title">AI-Powered Threat Predicted Analytics</div>
-        <div className="subtitle">Advanced predictions and insights powered by OpenAI GPT-5 analyzing vulnerability data.</div>
+      <header className="about-hero">
+        <h1 className="about-title">AI-Powered Threat Prediction</h1>
+        <p className="about-subtitle">Advanced predictions and insights powered by OpenAI GPT-5 analyzing vulnerability data.</p>
 
-        <div className="toolbar">
+        {/* Meta info under subtitle (centered, spaced) */}
+        <div className="hero-meta" style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <div className="select" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'default' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Forecast Horizon:</span>
             <span style={{ fontWeight: '600' }}>4 Weeks</span>
@@ -173,7 +174,9 @@ export default function ThreatIntelligence() {
             <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>CVE Lookback:</span>
             <span style={{ fontWeight: '600' }}>90 Days</span>
           </div>
+        </div>
 
+        <div className="toolbar">
           <PDFExport forecastData={forecastData} />
         </div>
 

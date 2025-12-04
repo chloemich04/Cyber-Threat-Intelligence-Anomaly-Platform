@@ -198,7 +198,7 @@ header{
 .title{
   font-family: "GlichFont", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(32px, 7vw, 40px);
+  font-size: clamp(52px, 20vw, 40px);
   letter-spacing: 2.0px;
 }
 /* Logo used in header when present */
@@ -541,7 +541,8 @@ main{
 .about-hero {
   text-align: center;
   margin-bottom: 60px;
-  padding: 40px 0;
+  padding: 64px 0 40px; /* add extra top spacing so absolutely positioned toolbar doesn't overlap */
+  position: relative; /* allow toolbar to be positioned relative to this header */
 }
 
 .about-title {
@@ -558,6 +559,24 @@ main{
   color: var(--muted);
   margin: 0;
   line-height: 1.6;
+}
+
+/* Position header toolbar (export button) in the top-right of the hero/header */
+.about-hero .toolbar {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  margin-top: 0; /* override default toolbar margin */
+  z-index: 10;
+}
+
+@media (max-width: 600px) {
+  /* On small screens, keep the toolbar in the normal flow under the title */
+  .about-hero .toolbar {
+    position: static;
+    margin-top: 16px;
+    right: auto;
+  }
 }
 
 .about-section {
@@ -910,10 +929,67 @@ main{
   text-decoration: underline;
 }
 
+/* LinkedIn avatar next to links in Contact page */
+.linkedin-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start; /* left-align the list items */
+}
+
+.linkedin-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start; /* left-align link contents */
+  width: 100%;
+}
+
+.linkedin-list li a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 6px 8px;
+}
+
+.linkedin-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+  border: 3px solid rgba(255,255,255,0.06);
+}
+
+.linkedin-role {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 6px;
+  /* align role text under the linked name (avatar width 80 + gap 12 = 92px) */
+  margin-left: 92px;
+  text-align: left;
+}
+
+@media (max-width: 600px) {
+  .linkedin-role { margin-left: 0; }
+}
+
+/* underline only the LinkedIn anchor links */
+.linkedin-person {
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+}
+
+
 .contact-detail {
-  color: var(--text);
+  color: #ffffff; /* force white */
   font-weight: 500;
   font-size: 14px;
+  text-decoration: underline;
 }
 
 /* Contact Form Section */

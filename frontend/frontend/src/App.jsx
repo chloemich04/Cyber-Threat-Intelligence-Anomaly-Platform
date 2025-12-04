@@ -47,18 +47,14 @@ export default function App(){
       default:
         return (
           <>
-            <header>
-        <div className="title">ThreatLens</div>
-        <div className="subtitle">
-          Informs everyday users on cyber attacks across the United States.
-        </div>
+            <header className="about-hero">
+              <h1 className="about-title">ThreatLens</h1>
+              <p className="about-subtitle">Informs everyday users on cyber attacks across the United States.</p>
 
-        <div className="toolbar">
-
-          <DashboardPDFExport />
-          
-        </div>
-      </header>
+              <div className="toolbar">
+                <DashboardPDFExport />
+              </div>
+            </header>
 
       <main>
         {/* KPIs */}
