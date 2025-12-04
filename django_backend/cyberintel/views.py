@@ -18,6 +18,8 @@ from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion,
 from .serializers import ContactSerializer
 import logging
 import re
+from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion
+from .serializers import CveCountsByRegionEpssSerializer
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -223,6 +225,17 @@ def isp_chart_data(request):
     result.sort(key=lambda k: k['total_count'], reverse=True)
 
     return Response(result)
+
+@api_view(['GET'])
+def state_epss_incidents(request, region_code):
+    cached_data = cache.get('state_epss_incidents')
+    if cached_data:
+        return Response(cached_data)
+
+    incidents = CveCountsByRegionEpss.objects.filter(region_code=region_code.upper()).order_by('rank_per_state')
+    serializer = CveCountsByRegionEpssSerializer(incidents, many=True)
+
+    return Response(serializer.data)
 
 
 

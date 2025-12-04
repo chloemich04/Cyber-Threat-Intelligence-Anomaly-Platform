@@ -17,5 +17,6 @@ urlpatterns = [
     path('epss_chart/', views.epss_chart_data, name='epss-chart'),
     path('internet_chart/', views.isp_chart_data, name='internet-chart'),
     path('contacts/', views.create_contact, name='contacts-create'),
+    path('epss_chart/epss_incidents/<str:region_code>/', views.state_epss_incidents, name='epss-incidents'),
 
 ]
