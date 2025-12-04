@@ -14,7 +14,12 @@ from django.db import connection
 from django.db.models import Count, Sum, Avg
 from django.core.cache import cache
 
-from .models import CveCountsByRegionEpss, CveCountsByRegion, NvdDataLimited, CweSoftwareLimited
+from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion, NvdDataLimited, CweSoftwareLimited, Contact
+from .serializers import ContactSerializer
+import logging
+import re
+from .models import CveCountsByRegionEpss, CveCountsByRegion, IspCountsByRegion
+from .serializers import CveCountsByRegionEpssSerializer
 
 # Path for storing latest forecast
 FORECAST_CACHE_FILE = os.path.join(settings.BASE_DIR, 'latest_forecast.json')
@@ -166,6 +171,71 @@ def ranking_bar_chart_data(request):
         rank += 1
 
     return Response(ranked_data)
+
+@api_view(['GET'])
+def epss_chart_data(request):
+    cached_data = cache.get('epss_chart_data')
+    if cached_data:
+        return Response(cached_data)
+
+    aggregated = (
+        CveCountsByRegionEpss.objects
+        .values("region_code")
+        .annotate(
+            total_cve_count=Sum("cve_count"),
+            avg_epss=Avg("avg_epss"),
+            num_unique_cves=Count("cve_id", distinct=True)
+        )
+        .order_by("avg_epss")
+    )
+
+    aggregated = list(aggregated)
+
+    # Add computed rank based on avg_epss
+    for idx, entry in enumerate(aggregated, start=1):
+        entry["rank_epss"] = idx
+
+    return Response(aggregated)
+
+@api_view(['GET'])
+def isp_chart_data(request):
+    cached_data = cache.get('internet_chart_data')
+    if cached_data:
+        return Response(cached_data)
+
+    qs = IspCountsByRegion.objects.all()
+
+    aggregated = {}
+    for row in qs:
+        state = row.region_code
+        if state not in aggregated:
+            aggregated[state] = {
+                "region_code": state,
+                "total_count": 0,
+                "isps": []
+            }
+        aggregated[state]["total_count"] += row.cnt
+        aggregated[state]["isps"].append({
+            "isp": row.isp,
+            "cnt": row.cnt,
+            "rank_per_state_isp": row.rank_per_state_isp
+        })
+    result = list(aggregated.values())
+
+    result.sort(key=lambda k: k['total_count'], reverse=True)
+
+    return Response(result)
+
+@api_view(['GET'])
+def state_epss_incidents(request, region_code):
+    cached_data = cache.get('state_epss_incidents')
+    if cached_data:
+        return Response(cached_data)
+
+    incidents = CveCountsByRegionEpss.objects.filter(region_code=region_code.upper()).order_by('rank_per_state')
+    serializer = CveCountsByRegionEpssSerializer(incidents, many=True)
+
+    return Response(serializer.data)
 
 
 
@@ -539,4 +609,55 @@ def get_latest_forecast(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+
+@api_view(['POST'])
+def create_contact(request):
+    """
+    Accept a Contact Us submission and persist it to the database.
+    POST /api/contacts/
+    Body: { "name": "", "email": "", "message": "" }
+    """
+    try:
+        # Basic per-IP rate limiting to reduce abuse
+        xff = request.META.get('HTTP_X_FORWARDED_FOR')
+        if xff:
+            client_ip = xff.split(',')[0].strip()
+        else:
+            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+
+        rl_key = f"contact_rl:{client_ip}"
+        try:
+            current = cache.get(rl_key, 0) or 0
+        except Exception:
+            current = 0
+
+        # Allow up to 5 submissions per hour per IP by default
+        if current >= 5:
+            logging.warning(f"Rate limit hit for contact submissions from {client_ip}")
+            retry_after = 3600
+            return Response({'error': 'Rate limit exceeded', 'retry_after_seconds': retry_after}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        serializer = ContactSerializer(data=request.data)
+        if serializer.is_valid():
+            contact = serializer.save()
+            # increment counter
+            try:
+                cache.set(rl_key, current + 1, timeout=3600)
+            except Exception:
+                logging.exception("Could not set rate limit cache key")
+            return Response(ContactSerializer(contact).data, status=status.HTTP_201_CREATED)
+        else:
+            # Log suspicious content patterns for audit
+            try:
+                combined = " ".join([str(v) for v in request.data.values()])
+                if re.search(r"<script|javascript:|onerror=|onload=|;--|\b(drop|delete|insert|update|truncate|alter|exec|declare)\b", combined, re.I):
+                    logging.warning(f"Rejected contact submission (suspicious patterns) from {client_ip}: {combined}")
+            except Exception:
+                pass
+            return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logging.exception("Unhandled error in create_contact")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

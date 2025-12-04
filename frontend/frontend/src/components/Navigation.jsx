@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigation } from '../context/AppContext';
+import '../App.css';
 
 const Navigation = () => {
   const { currentPage, isMenuOpen, setCurrentPage, toggleMenu } = useNavigation();
@@ -16,7 +17,7 @@ const Navigation = () => {
       <div className="nav-container">
         {/* Logo/Brand */}
         <div className="nav-brand">
-          <span className="brand-text">CTI Dashboard</span>
+          <img src="/images/Threat_Lens_Logo_Blue.png" alt="ThreatLens logo" className="logo" />
         </div>
 
         {/* Desktop Navigation */}

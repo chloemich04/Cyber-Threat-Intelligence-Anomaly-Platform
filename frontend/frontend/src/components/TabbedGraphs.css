@@ -1,0 +1,181 @@
+.tabbed-graphs-container {
+  background: var(--panel);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Headers */
+.tab-headers {
+  display: flex;
+  background: rgba(178, 75, 243, 0.05);
+  border-bottom: 2px solid var(--secondary-dim);
+  padding: 0;
+  gap: 0;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.tab-button:hover {
+  background: rgba(0, 217, 255, 0.1);
+  color: var(--accent);
+}
+
+.tab-button.active {
+  background: rgba(0, 217, 255, 0.05);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  box-shadow: 0 -2px 8px rgba(0, 217, 255, 0.2);
+}
+
+.tab-button:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background: var(--border);
+}
+
+/* Content Area */
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.graph-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+.info-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--muted);
+  padding: 4px 8px;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-button:hover {
+  color: var(--accent);
+}
+
+/* Graph Wrapper */
+.graph-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.graph-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.epss-graph {
+  min-height: 340px;
+}
+
+.isp-graph {
+  min-height: 280px;
+}
+
+.rankings-graph {
+  min-height: 360px;
+}
+
+/* Filter Info */
+.filter-info {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.filter-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .tab-button {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .graph-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tab-headers {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    border-bottom: none;
+    border-left: 3px solid transparent;
+  }
+
+  .tab-button.active {
+    border-left-color: var(--accent);
+    border-bottom-color: transparent;
+  }
+
+  .tab-button:not(:last-child)::after {
+    display: none;
+  }
+
+  .graph-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

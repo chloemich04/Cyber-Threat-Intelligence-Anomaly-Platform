@@ -15,10 +15,8 @@ export default function DonutChart({ data = [], colors = {}, height = 280, inner
   const colorArray = Array.isArray(colors) ? colors : null;
 
   return (
-    <div style={{ width: '100%', height: height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        {/* reserve space below the chart for the legend using margin and a bottom Legend */}
-        <PieChart margin={{ top: 20, right: 10, bottom: 56, left: 10 }}>
+    <div style={{ width: '100%', height: height, display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+        <PieChart width={200} height={height} margin={{ top: 0, right: 10, bottom: 0, left: 10 }}>
           <Pie
             data={safeData}
             dataKey="value"
@@ -31,16 +29,55 @@ export default function DonutChart({ data = [], colors = {}, height = 280, inner
             label={false}
             onMouseEnter={onPieEnter}
             onMouseLeave={onPieLeave}
+            stroke="#1f2937"
+            strokeWidth={1}
           >
             {safeData.map((entry, index) => {
               const fill = colorArray ? (colorArray[index % colorArray.length]) : (colors[entry.name] || '#8884d8');
               return <Cell key={`cell-${index}`} fill={fill} />;
             })}
           </Pie>
-          <Tooltip formatter={(value, name) => [value, name]} />
-          <Legend verticalAlign="bottom" align="center" layout="horizontal" iconType="square" height={36} />
+          {/* Styled tooltip matching RankingBarChart's CustomTooltip */}
+          <Tooltip content={<DonutCustomTooltip />} />
+          <Legend
+            verticalAlign="bottom"
+            align="center"
+            layout="horizontal"
+            iconType="circle"
+            height={45}
+            wrapperStyle={{ 
+              fontSize: '9px', 
+              paddingTop: '0px',
+              width: '100%',
+              lineHeight: '14px'
+            }}
+            formatter={(value) => <span style={{ color: '#e5e7eb' }}>{value}</span>}
+          />
         </PieChart>
-      </ResponsiveContainer>
     </div>
   );
 }
+
+  function DonutCustomTooltip({ active, payload, label }) {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0];
+    const obj = p.payload || {};
+    const name = obj.name || label || '';
+    const value = obj.value != null ? obj.value : (p.value != null ? p.value : null);
+    const formatted = typeof value === 'number' ? (Number.isInteger(value) ? value : Math.round(value * 100) / 100) : value;
+
+    const style = {
+      background: '#111827',
+      color: '#e5e7eb',
+      padding: '8px 10px',
+      borderRadius: 8,
+      border: '1px solid #1f2937',
+    };
+
+    return (
+      <div style={style}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#e5e7eb' }}>{name}</div>
+        <div style={{ fontSize: 12, color: '#e5e7eb', marginTop: 6 }}>{String(formatted)}</div>
+      </div>
+    );
+  }

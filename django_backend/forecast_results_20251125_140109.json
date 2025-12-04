@@ -1,0 +1,206 @@
+{
+  "forecast_horizon_weeks": 4,
+  "predictions": [
+    {
+      "week_start": "2025-11-25",
+      "expected_count": 8,
+      "expected_count_ci": [
+        3,
+        15
+      ],
+      "spike_probability": 0.18,
+      "spike_threshold_pct": 0.25,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-2368",
+          "score": 0.25
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-1000075",
+          "score": 0.2
+        },
+        {
+          "signal_type": "tag",
+          "id": "exploit",
+          "score": 0.18
+        },
+        {
+          "signal_type": "tag",
+          "id": "vulnerability",
+          "score": 0.15
+        }
+      ],
+      "confidence": 0.68
+    },
+    {
+      "week_start": "2025-12-02",
+      "expected_count": 9,
+      "expected_count_ci": [
+        4,
+        17
+      ],
+      "spike_probability": 0.2,
+      "spike_threshold_pct": 0.25,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-2368",
+          "score": 0.24
+        },
+        {
+          "signal_type": "tag",
+          "id": "exploit",
+          "score": 0.19
+        },
+        {
+          "signal_type": "tag",
+          "id": "vulnerability",
+          "score": 0.16
+        }
+      ],
+      "confidence": 0.69
+    },
+    {
+      "week_start": "2025-12-09",
+      "expected_count": 10,
+      "expected_count_ci": [
+        4,
+        18
+      ],
+      "spike_probability": 0.22,
+      "spike_threshold_pct": 0.25,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-1000075",
+          "score": 0.23
+        },
+        {
+          "signal_type": "tag",
+          "id": "exploit",
+          "score": 0.18
+        },
+        {
+          "signal_type": "tag",
+          "id": "vulnerability",
+          "score": 0.15
+        }
+      ],
+      "confidence": 0.7
+    },
+    {
+      "week_start": "2025-12-16",
+      "expected_count": 11,
+      "expected_count_ci": [
+        5,
+        20
+      ],
+      "spike_probability": 0.24,
+      "spike_threshold_pct": 0.25,
+      "top_signals": [
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-2368",
+          "score": 0.22
+        },
+        {
+          "signal_type": "cve",
+          "id": "CVE-2018-1000075",
+          "score": 0.2
+        },
+        {
+          "signal_type": "tag",
+          "id": "exploit",
+          "score": 0.17
+        }
+      ],
+      "confidence": 0.71
+    }
+  ],
+  "predicted_threat_types": [
+    {
+      "threat_type": "Exploit",
+      "probability": 0.45
+    },
+    {
+      "threat_type": "Vulnerability",
+      "probability": 0.35
+    },
+    {
+      "threat_type": "Malware",
+      "probability": 0.1
+    }
+  ],
+  "monthly_predicted_attacks": 38,
+  "key_signals_user_friendly": [
+    {
+      "label": "CVE-2018-2368 (Exploit)",
+      "type": "cve",
+      "score": 0.25
+    },
+    {
+      "label": "CVE-2018-1000075 (Vulnerability)",
+      "type": "cve",
+      "score": 0.2
+    },
+    {
+      "label": "Exploit Activity",
+      "type": "tag",
+      "score": 0.18
+    },
+    {
+      "label": "Vulnerability Reports",
+      "type": "tag",
+      "score": 0.15
+    }
+  ],
+  "metadata": {
+    "model": "gpt-5-2025-01-01-preview",
+    "temperature": 0,
+    "aggregation_method": "weekly_count_us_only",
+    "region_analyzed": "United States",
+    "forecast_generated_at_utc": "2025-11-25T20:01:09.555482"
+  },
+  "threat_types": [
+    {
+      "threat_type": "Buffer Overflow",
+      "count": 15
+    },
+    {
+      "threat_type": "Cross-Site Scripting (XSS)",
+      "count": 5
+    },
+    {
+      "threat_type": "Injection",
+      "count": 4
+    },
+    {
+      "threat_type": "Authentication",
+      "count": 3
+    },
+    {
+      "threat_type": "Path Traversal",
+      "count": 3
+    },
+    {
+      "threat_type": "Denial of Service",
+      "count": 2
+    },
+    {
+      "threat_type": "Remote Code Execution",
+      "count": 2
+    },
+    {
+      "threat_type": "Null Pointer Dereference",
+      "count": 1
+    },
+    {
+      "threat_type": "Improper Restriction Of Rendered Ui Layers Or Fram",
+      "count": 1
+    }
+  ],
+  "total_threats": 36,
+  "generated_at": "2025-11-25T14:01:09.558545"
+}

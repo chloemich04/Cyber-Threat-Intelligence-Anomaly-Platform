@@ -1,10 +1,12 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import ForecastDisplay from './ForecastDisplay';
+import { getLatestForecast } from '../utils/forecastCache'; // Ensure forecast cache module is available
 import ForecastTimeline from './ForecastTimeline';
 import PDFExport from './PDFExport';
 import KeySignalsBarChart from './KeySignalsBarChart';
 import ForecastRiskMatrix from './ForecastRiskMatrix';
 import InfoModal from './InfoModal';
+import InfoIcon from './InfoIcon';
 const PredictedTypesDonut = React.lazy(() => import('./PredictedTypesDonut'));
 
 function PredictedTypesDonutWrapper({ predictedTypes }) {
@@ -30,6 +32,10 @@ export default function ThreatIntelligence() {
   const [showPredictedTypesInfo, setShowPredictedTypesInfo] = useState(false);
   const [showKeySignalsInfo, setShowKeySignalsInfo] = useState(false);
   const [showRiskMatrixInfo, setShowRiskMatrixInfo] = useState(false);
+  const [showAvgConfidenceInfo, setShowAvgConfidenceInfo] = useState(false);
+  const [showAvgSpikeInfo, setShowAvgSpikeInfo] = useState(false);
+  const [showCvesAnalyzedInfo, setShowCvesAnalyzedInfo] = useState(false);
+  const [showMonthlyAttacksInfo, setShowMonthlyAttacksInfo] = useState(false);
 
   // Calculate next Monday at 9:00 AM
   const getNextMonday = () => {
@@ -97,12 +103,10 @@ export default function ThreatIntelligence() {
   // Fetch forecast data for PDF export and charts
   const fetchForecastData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/forecast/latest/');
-      if (response.ok) {
-        const data = await response.json();
-        setForecastData(data);
-      }
+      const data = await getLatestForecast();
+      setForecastData(data);
     } catch (error) {
+      // keep non-fatal: component is fine without forecast data
       console.error('Error fetching forecast data:', error);
     }
   };
@@ -112,9 +116,11 @@ export default function ThreatIntelligence() {
     // Fetch forecast data on mount
     fetchForecastData();
 
-    // Listen for forecast updates
+    // Listen for forecast updates (force refresh)
     const handleForecastUpdate = () => {
       fetchForecastData();
+      // also invalidate and force-get latest from cache on other listeners
+      getLatestForecast({ force: true }).then(d => setForecastData(d)).catch(() => {});
     };
     window.addEventListener('forecastUpdated', handleForecastUpdate);
 
@@ -144,7 +150,7 @@ export default function ThreatIntelligence() {
   return (
     <>
       <header>
-        <div className="title">AI-Powered Threat Predictions</div>
+        <div className="title">AI-Powered Threat Predicted Analytics</div>
         <div className="subtitle">Advanced predictions and insights powered by OpenAI GPT-5 analyzing vulnerability data.</div>
 
         <div className="toolbar">
@@ -182,10 +188,27 @@ export default function ThreatIntelligence() {
       <main>
         {/* Forecast Accuracy Metrics */}
         <section className="panel" style={{ gridColumn: '1 / -1' }}>
-          <h3>Forecast Accuracy & Performance</h3>
+          <h3 style={{ textAlign: 'left' }}>Forecast Accuracy & Performance</h3>
           <div className="kpis">
             <div className="kpi">
-              <div className="label">Average Confidence</div>
+              <div className="label" style={{ display: 'flex', alignItems: 'start', justifyContent: 'left', gap: '4px' }}>
+                Average Confidence
+                <button
+                  type="button"
+                  title="What is Average Confidence?"
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--muted)',
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                  }}
+                  onClick={() => setShowAvgConfidenceInfo(true)}
+                >
+                  <InfoIcon size={12} />
+                </button>
+              </div>
               <div className="value">
                 {forecastData?.predictions && forecastData.predictions.length > 0
                   ? `${Math.round((forecastData.predictions.reduce((sum, p) => sum + (p.confidence || 0), 0) / forecastData.predictions.length) * 100)}%`
@@ -194,7 +217,24 @@ export default function ThreatIntelligence() {
             </div>
 
             <div className="kpi">
-              <div className="label">Average Spike Probability</div>
+              <div className="label" style={{ display: 'flex', alignItems: 'start', justifyContent: 'left', gap: '4px' }}>
+                Average Spike Probability
+                <button
+                  type="button"
+                  title="What is Average Spike Probability?"
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--muted)',
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                  }}
+                  onClick={() => setShowAvgSpikeInfo(true)}
+                >
+                  <InfoIcon size={12} />
+                </button>
+              </div>
               <div className="value">
                 {forecastData?.predictions && forecastData.predictions.length > 0
                   ? `${Math.round((forecastData.predictions.reduce((sum, p) => sum + (p.spike_probability || 0), 0) / forecastData.predictions.length) * 100)}%`
@@ -203,12 +243,46 @@ export default function ThreatIntelligence() {
             </div>
 
             <div className="kpi">
-              <div className="label">CVEs Analyzed</div>
+              <div className="label" style={{ display: 'flex', alignItems: 'start', justifyContent: 'left', gap: '4px' }}>
+                CVEs Analyzed
+                <button
+                  type="button"
+                  title="What are CVEs Analyzed?"
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--muted)',
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                  }}
+                  onClick={() => setShowCvesAnalyzedInfo(true)}
+                >
+                  <InfoIcon size={12} />
+                </button>
+              </div>
               <div className="value">{forecastData?.total_threats || '—'}</div>
             </div>
 
             <div className="kpi">
-              <div className="label">Monthly Predicted Attacks</div>
+              <div className="label" style={{ display: 'flex', alignItems: 'start', justifyContent: 'left', gap: '4px' }}>
+                Monthly Predicted Attacks
+                <button
+                  type="button"
+                  title="What are Monthly Predicted Attacks?"
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--muted)',
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                  }}
+                  onClick={() => setShowMonthlyAttacksInfo(true)}
+                >
+                  <InfoIcon size={12} />
+                </button>
+              </div>
               <div className="value">
                 {typeof forecastData?.monthly_predicted_attacks === 'number' ? forecastData.monthly_predicted_attacks.toLocaleString() : '—'}
               </div>
@@ -271,7 +345,7 @@ export default function ThreatIntelligence() {
         
         {/* Charts Section */}
         <section className="panel charts-full-width">
-          <h3>AI-Powered Analytics & Insights</h3>
+          <h3 style={{ textAlign: 'left' }}>AI-Powered Analytics & Insights</h3>
           <div className="charts">
             <div className="chart-box" aria-label="Predicted threat types donut" data-chart-id="predicted-donut">
               <div className="chart-header">
@@ -293,7 +367,7 @@ export default function ThreatIntelligence() {
                     aria-label="Predicted threat types info"
                     onClick={() => setShowPredictedTypesInfo(true)}
                   >
-                    ℹ️
+                    <InfoIcon size={14} />
                   </button>
                 </div>
               </div>
@@ -325,7 +399,7 @@ export default function ThreatIntelligence() {
                     aria-label="Key signals info"
                     onClick={() => setShowKeySignalsInfo(true)}
                   >
-                    ℹ️
+                    <InfoIcon size={14} />
                   </button>
                 </div>
               </div>
@@ -357,7 +431,7 @@ export default function ThreatIntelligence() {
                     aria-label="Risk matrix info"
                     onClick={() => setShowRiskMatrixInfo(true)}
                   >
-                    ℹ️
+                    <InfoIcon size={14} />
                   </button>
                 </div>
               </div>
@@ -373,7 +447,53 @@ export default function ThreatIntelligence() {
         </section>
       </main>
 
-      <footer>© 2025 CTI Dashboard</footer>
+      {/* KPI Info Modals */}
+      <InfoModal open={showAvgConfidenceInfo} onClose={() => setShowAvgConfidenceInfo(false)} title="Average Confidence">
+        <p>
+          Average Confidence represents the model's overall certainty in its predictions across all forecasted weeks. It reflects how reliable the AI believes its threat count estimates are based on available data.
+        </p>
+        <ul style={{ marginTop: 8 }}>
+          <li><strong>What it shows:</strong> A percentage indicating the model's average confidence level across all predictions (0-100%).</li>
+          <li><strong>How to use:</strong> Higher confidence suggests more reliable predictions. Use this to gauge whether to trust the forecast for planning purposes.</li>
+          <li><strong>Limitations:</strong> High confidence doesn't guarantee accuracy—it reflects the model's assessment based on historical patterns and current signals.</li>
+        </ul>
+      </InfoModal>
+
+      <InfoModal open={showAvgSpikeInfo} onClose={() => setShowAvgSpikeInfo(false)} title="Average Spike Probability">
+        <p>
+          Average Spike Probability indicates the likelihood of sudden increases in threat activity above normal levels. A spike represents an anomalous surge in incidents that requires heightened attention.
+        </p>
+        <ul style={{ marginTop: 8 }}>
+          <li><strong>What it shows:</strong> The average probability (0-100%) that threat activity will spike above expected levels during the forecast period.</li>
+          <li><strong>How to use:</strong> Higher probabilities warrant proactive preparations like increased monitoring, staff alerts, or resource allocation.</li>
+          <li><strong>Limitations:</strong> Spikes are based on historical patterns—unprecedented threats or events may not be captured.</li>
+        </ul>
+      </InfoModal>
+
+      <InfoModal open={showCvesAnalyzedInfo} onClose={() => setShowCvesAnalyzedInfo(false)} title="CVEs Analyzed">
+        <p>
+          A CVE (Common Vulnerabilities and Exposures) is a publicly disclosed security flaw in software or hardware. Each CVE receives a unique identifier (e.g., CVE-2024-1234).
+        </p>
+        <p style={{ marginTop: 8 }}>
+          CVEs Analyzed shows the total number of vulnerability records processed by the AI model to generate the current forecast. This includes both recent and historical CVE data from multiple threat intelligence sources.
+        </p>
+        <ul style={{ marginTop: 8 }}>
+          <li><strong>What it shows:</strong> The count of unique CVE records analyzed as input for threat prediction, including severity ratings, exploit availability, and exploitation trends.</li>
+          <li><strong>How to use:</strong> A larger dataset generally improves prediction quality. Track this number over time to understand forecast data coverage and ensure comprehensive vulnerability analysis.</li>
+        </ul>
+      </InfoModal>
+
+      <InfoModal open={showMonthlyAttacksInfo} onClose={() => setShowMonthlyAttacksInfo(false)} title="Monthly Predicted Attacks">
+        <p>
+          Monthly Predicted Attacks represents the AI's estimate of total cyber incidents expected over the next month based on current trends, historical data, and emerging threat signals.
+        </p>
+        <ul style={{ marginTop: 8 }}>
+          <li><strong>What it shows:</strong> The forecasted number of cyber attack incidents for the upcoming month.</li>
+          <li><strong>How to use:</strong> Use this for resource planning, budgeting, and setting expectations for security operations teams.</li>
+        </ul>
+      </InfoModal>
+
+      <footer>© 2025 ThreatLens</footer>
     </>
   );
 }

@@ -8,7 +8,7 @@ const AboutUs = () => {
         <section className="about-hero">
           <h1 className="about-title">About Our Platform</h1>
           <p className="about-subtitle">
-            Advanced Cyber Threat Intelligence & Anomaly Detection Platform
+            All about our mission, team, and the technology behind our cyber threat intelligence platform.
           </p>
         </section>
 
@@ -21,6 +21,92 @@ const AboutUs = () => {
             in real-time. Our platform combines cutting-edge technology with intuitive visualization 
             to make complex threat data accessible and actionable.
           </p>
+        </section>
+
+        {/* Meet the Team Section */}
+        <section className="about-section">
+          <h2 className="section-title">Meet the Team</h2>
+         
+          <div className="team-grid">
+            <div className="team-member">
+              <div className="member-avatar">
+                <img 
+                  src="/images/team/Dhruv.png" 
+                  alt="Dhruv Patel"
+                  className="member-photo"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <div className="avatar-placeholder" style={{display: 'none'}}>👤</div>
+              </div>
+              <h3 className="member-name">Dhruv Patel</h3>
+              <p className="member-role">Frontend Developer</p>
+              <p className="member-bio">
+                Responsible for all frontend development including React components, user interface design, 
+                data visualizations, and creating an intuitive user experience for the application.
+              </p>
+            </div>
+            <div className="team-member">
+              <div className="member-avatar">
+                <img 
+                  src="/images/team/chloe-robinson.jpg" 
+                  alt="Chloe Robinson"
+                  className="member-photo"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <div className="avatar-placeholder" style={{display: 'none'}}>👤</div>
+              </div>
+              <h3 className="member-name">Chloe Robinson</h3>
+              <p className="member-role">Backend Developer</p>
+              <p className="member-bio">
+                Responsible for all backend development including Django API, database management, 
+                threat intelligence data processing, and server-side architecture for the application.
+              </p>
+            </div>
+            <div className="team-member">
+              <div className="member-avatar">
+                <img 
+                  src="/images/team/lydia-profile.png" 
+                  alt="Lydia Martin"
+                  className="member-photo"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                
+              </div>
+              <h3 className="member-name">Lydia Martin</h3>
+              <p className="member-role">Full Stack Developer</p>
+              <p className="member-bio">
+                Responsible for both frontend and backend development, integrating various components of the platform,
+                and ensuring seamless functionality across the application.
+              </p>
+            </div>
+            <div className="team-member">
+              <div className="member-avatar">
+                <img 
+                  src="/images/team/Akhila.png" 
+                  alt="Akhila Dhatrak"
+                  className="member-photo"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+              </div>
+              <h3 className="member-name">Akhila Dhatrak</h3>
+              <p className="member-role">Data Analyst</p>
+              <p className="member-bio">
+                Responsible for conducting threat research, analyzing and collecting security data, and enhancing the application's data using Databricks and Azure.
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* What We Do Section */}
@@ -94,102 +180,7 @@ const AboutUs = () => {
           </div>
         </section>
 
-        {/* Meet the Team Section */}
-        <section className="about-section">
-          <h2 className="section-title">Meet the Team</h2>
-          <p className="section-content">
-            Our team consists of cybersecurity experts, data scientists, and software engineers 
-            dedicated to advancing threat intelligence capabilities.
-          </p>
-          <div className="team-grid">
-            <div className="team-member">
-              <div className="member-avatar">
-                <div className="avatar-placeholder">👤</div>
-              </div>
-              <h3 className="member-name">[Your Name]</h3>
-              <p className="member-role">Lead Developer & Security Analyst</p>
-              <p className="member-bio">
-                [Add your bio here - background, expertise, and role in the project]
-              </p>
-            </div>
-            <div className="team-member">
-              <div className="member-avatar">
-                <div className="avatar-placeholder">👤</div>
-              </div>
-              <h3 className="member-name">[Team Member 2]</h3>
-              <p className="member-role">Data Scientist</p>
-              <p className="member-bio">
-                [Add team member bio here - focus on data analysis and threat intelligence]
-              </p>
-            </div>
-            <div className="team-member">
-              <div className="member-avatar">
-                <div className="avatar-placeholder">👤</div>
-              </div>
-              <h3 className="member-name">[Team Member 3]</h3>
-              <p className="member-role">UI/UX Designer</p>
-              <p className="member-bio">
-                [Add team member bio here - focus on user experience and interface design]
-              </p>
-            </div>
-            <div className="team-member">
-              <div className="member-avatar">
-                <div className="avatar-placeholder">👤</div>
-              </div>
-              <h3 className="member-name">[Team Member 4]</h3>
-              <p className="member-role">Cybersecurity Expert</p>
-              <p className="member-bio">
-                [Add team member bio here - focus on security research and threat analysis]
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Project Information */}
-        <section className="about-section">
-          <h2 className="section-title">Project Information</h2>
-          <div className="project-info">
-            <div className="info-item">
-              <h3>Project Name</h3>
-              <p>Cyber Threat Intelligence & Anomaly Detection Platform</p>
-            </div>
-            <div className="info-item">
-              <h3>Course</h3>
-              <p>INFX 490 - Final Project</p>
-            </div>
-            <div className="info-item">
-              <h3>Year</h3>
-              <p>2025</p>
-            </div>
-            <div className="info-item">
-              <h3>Focus Areas</h3>
-              <p>Cybersecurity, Data Visualization, Threat Intelligence, Risk Assessment</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Contact Section */}
-        <section className="about-section">
-          <h2 className="section-title">Get in Touch</h2>
-          <p className="section-content">
-            Interested in learning more about our platform or collaborating on cybersecurity research? 
-            We'd love to hear from you.
-          </p>
-          <div className="contact-info">
-            <div className="contact-item">
-              <span className="contact-label">Email:</span>
-              <span className="contact-value">[your-email@university.edu]</span>
-            </div>
-            <div className="contact-item">
-              <span className="contact-label">University:</span>
-              <span className="contact-value">[Your University Name]</span>
-            </div>
-            <div className="contact-item">
-              <span className="contact-label">Department:</span>
-              <span className="contact-value">Information Studies</span>
-            </div>
-          </div>
-        </section>
+        
       </div>
     </div>
   );

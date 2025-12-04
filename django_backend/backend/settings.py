@@ -73,8 +73,10 @@ MIDDLEWARE = [
 
 # CORS settings for frontend
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",# Vite dev server default port
-     "http://127.0.0.1:5173",
+    "http://localhost:5173",  # Vite dev server default port
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",  # Alternative Vite port
+    "http://127.0.0.1:5174",
     "http://localhost:3000",  # Alternative React dev port
 ]
 
@@ -106,7 +108,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 
-# Database configuration - using PostgreSQL (production database with CVE/CWE data)
+# Database configuration - using SQLite for development
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

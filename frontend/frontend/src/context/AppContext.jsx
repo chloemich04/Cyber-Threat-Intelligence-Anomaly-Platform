@@ -1,4 +1,13 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+
+// Module-level guard to ensure we only attempt to load insights once per app session.
+// This prevents duplicate loads in React StrictMode (dev) or accidental remounts.
+let _insightsLoaded = false;
+// Tracks whether a load attempt is currently in progress. Allows retry if previous
+// attempt returned no data (we won't mark _insightsLoaded true on empty results).
+let _insightsLoadStarted = false;
+// Module-level guard for metrics derivation so we compute once per session
+let _metricsLoaded = false;
 
 // Initial State
 const initialState = {
@@ -19,76 +28,18 @@ const initialState = {
     averageLoss: null,
     exposureScore: null,
     kevActiveExploits: null,
+    // Simpler, robust KPIs
+    top5ConcentrationPercent: null,
+    activeStatesPercent: null,
   },
-  
-  // Threat Data
-  threatData: {
-    stateThreatData: {
-      'New York': { threats: 150 },
-      'California': { threats: 120 },
-      'Illinois': { threats: 100 },
-      'Texas': { threats: 90 },
-      'Pennsylvania': { threats: 85 },
-      'Georgia': { threats: 70 },
-      'Massachusetts': { threats: 75 },
-      'Florida': { threats: 60 },
-      'Colorado': { threats: 50 },
-      'Washington': { threats: 65 },
-      'Missouri': { threats: 55 },
-      'Utah': { threats: 55 },
-      'Arizona': { threats: 45 },
-      'North Carolina': { threats: 58 },
-      'Virginia': { threats: 62 },
-      'Ohio': { threats: 52 },
-      'Michigan': { threats: 48 },
-      'Tennessee': { threats: 42 },
-      'Indiana': { threats: 40 },
-      'Maryland': { threats: 38 },
-      'Wisconsin': { threats: 35 },
-      'Minnesota': { threats: 33 },
-      'Louisiana': { threats: 30 },
-      'Alabama': { threats: 28 },
-      'Oregon': { threats: 25 },
-      'Kentucky': { threats: 22 },
-      'South Carolina': { threats: 20 },
-      'Oklahoma': { threats: 18 },
-      'Connecticut': { threats: 16 },
-      'Iowa': { threats: 15 },
-      'Nevada': { threats: 14 },
-      'Mississippi': { threats: 12 },
-      'Kansas': { threats: 10 },
-      'Arkansas': { threats: 9 },
-      'Nebraska': { threats: 8 },
-      'New Mexico': { threats: 7 },
-      'West Virginia': { threats: 6 },
-      'Idaho': { threats: 5 },
-      'Hawaii': { threats: 4 },
-      'New Hampshire': { threats: 3 },
-      'Maine': { threats: 2 },
-      'Montana': { threats: 1 },
-      'Rhode Island': { threats: 0 },
-      'Delaware': { threats: 0 },
-      'South Dakota': { threats: 0 },
-      'North Dakota': { threats: 0 },
-      'Alaska': { threats: 0 },
-      'Vermont': { threats: 0 },
-      'Wyoming': { threats: 0 }
-    },
-    threatSummary: [
-      { category: 'Phishing', incidents: 1245, change: 12, avgLoss: 8400, status: 'Rising' },
-      { category: 'Ransomware', incidents: 530, change: 4, avgLoss: 58000, status: 'Stable' },
-      { category: 'Malware', incidents: 890, change: -6, avgLoss: 11200, status: 'Falling' },
-      { category: 'DDoS', incidents: 210, change: 1, avgLoss: 5600, status: 'Stable' },
-      { category: 'Credential Stuffing', incidents: 430, change: 9, avgLoss: 3700, status: 'Rising' },
-    ],
-  },
+
   
   // Insights
   insights: {
-    highestRate: 'State A',
-    lowestRate: 'State B',
-    topThreatTypes: ['Ransomware', 'Phishing', 'DDoS'],
-    notes: 'Use this panel for anomaly alerts (e.g., KEV matches, spikes).',
+    highestRate: '',
+    lowestRate: '',
+    topThreatTypes: [],
+    notes: '',
   },
   
   // UI State
@@ -160,6 +111,11 @@ const appReducer = (state, action) => {
       };
       
     case ActionTypes.UPDATE_INSIGHTS:
+      try {
+        console.debug('reducer UPDATE_INSIGHTS - prev insights:', state.insights, 'payload:', action.payload);
+      } catch (e) {
+        // ignore
+      }
       return {
         ...state,
         insights: {
@@ -225,7 +181,27 @@ export const AppProvider = ({ children }) => {
     }, []),
 
     updateInsights: useCallback((insights) => {
+      try {
+        console.debug('actions.updateInsights -> dispatching UPDATE_INSIGHTS', insights);
+      } catch (e) {
+        // ignore logging failures
+      }
       dispatch({ type: ActionTypes.UPDATE_INSIGHTS, payload: insights });
+    }, []),
+
+    // reloadInsights is intentionally a no-op since insights are now derived from
+    // the heatmapLoaded event (canonical aggregation). This preserves the API
+    // shape for any callers but avoids dynamic imports or fallback loaders.
+    reloadInsights: useCallback(async ({ force = false } = {}) => {
+      try {
+        // keep caller semantics deterministic
+        actions.setLoading(false);
+        console.debug('reloadInsights called (no-op) - legacy insights loader removed');
+        return null;
+      } catch (e) {
+        actions.setLoading(false);
+        return null;
+      }
     }, []),
 
     setLoading: useCallback((loading) => {
@@ -241,6 +217,151 @@ export const AppProvider = ({ children }) => {
     state,
     actions,
   };
+
+  // Instead of scheduling standalone loader attempts, listen for the heatmap component to
+  // announce when it has loaded data. USHeatmap dispatches a `heatmapLoaded` event with
+  // `detail.mappedData` when it finishes its fetch and aggregation. Using that event
+  // ensures Insights are derived from the same canonical data source and avoids duplicate
+  // network requests.
+  useEffect(() => {
+    if (_insightsLoaded) return;
+    let mounted = true;
+
+    const handler = (ev) => {
+      try {
+        const mapped = ev && ev.detail && ev.detail.mappedData;
+        console.debug('AppContext: received heatmapLoaded event, mappedData present:', !!mapped);
+        if (!mapped || !mounted) return;
+
+        // Compute insights from the mapped data (mapped keys = state names)
+        // Also collect fields we can use for Key Metrics (exploit_count, avg_cvss).
+        const items = Object.entries(mapped).map(([name, d]) => ({
+          name,
+          total_cves: Number((d && d.total_cves) || 0),
+          top_tags: Array.isArray(d.top_tags) ? d.top_tags : (Array.isArray(d.top_vendors) ? d.top_vendors : []),
+          notes: Array.isArray(d.notes) ? d.notes : [],
+          exploit_count: Number((d && d.exploit_count) || 0),
+          avg_cvss: d && (d.avg_cvss != null) ? Number(d.avg_cvss) : null,
+        }));
+
+        if (!items.length) return;
+
+        // sort descending by total_cves
+        items.sort((a, b) => b.total_cves - a.total_cves);
+        const highest = items[0];
+        const minVal = Math.min(...items.map(i => i.total_cves));
+        const lowestEntries = items.filter(i => i.total_cves === minVal);
+
+        const highestRate = `${highest.name} (${highest.total_cves})`;
+        const lowestRates = lowestEntries.map(e => `${e.name} (${e.total_cves})`);
+        const lowestRate = lowestRates.length ? lowestRates[0] : '';
+
+        // aggregate tags
+        const tagCounts = {};
+        const notesList = [];
+        for (const it of items) {
+          if (Array.isArray(it.top_tags)) {
+            for (const t of it.top_tags) {
+              if (!t) continue;
+              tagCounts[t] = (tagCounts[t] || 0) + 1;
+            }
+          }
+          if (Array.isArray(it.notes)) {
+            for (const n of it.notes) if (n) notesList.push(n);
+          }
+        }
+
+        const topThreatTypes = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+
+        // prefer notes from highest state if present
+        const notes = (highest && highest.notes && highest.notes.length) ? highest.notes.slice(0,3).join('; ') : (notesList.length ? notesList.slice(0,3).join('; ') : '');
+
+        const payload = { highestRate, lowestRates, lowestRate, topThreatTypes, notes };
+        console.debug('AppContext: computed insights payload from heatmap:', payload);
+        actions.updateInsights(payload);
+        _insightsLoaded = true;
+
+        // Derive Key Metrics from the same canonical heatmap data so the dashboard
+        // and PDF export are consistent with the heatmap source. We compute only
+        // metrics that can be robustly derived from heatmap output. Some KPIs
+        // (for example Average Loss / Incident) require financial/impact data
+        // that is not available in the heatmap payload; those will remain null.
+        try {
+          if (!_metricsLoaded) {
+            // Aggregate national totals (sum across all states) so KPIs are computed for the whole US
+            const totalIncidents = items.reduce((s, it) => s + (it.total_cves || 0), 0);
+            const totalExploits = items.reduce((s, it) => s + (it.exploit_count || 0), 0);
+
+            // Compute a weighted average CVSS across states (weight by incidents).
+            const cvssNumerator = items.reduce((s, it) => s + ((it.avg_cvss != null ? it.avg_cvss : 0) * (it.total_cves || 0)), 0);
+            const cvssDenominator = items.reduce((s, it) => s + (it.total_cves || 0), 0);
+            const weightedAvgCvss = cvssDenominator ? +(cvssNumerator / cvssDenominator).toFixed(2) : null;
+
+            // Exposure score: composite 0-100. This is a heuristic derived client-side
+            // so it remains explainable and reproducible. Formula (simple, conservative):
+            // - CVSS component (0-70): weightedAvgCvss / 10 * 70
+            // - Incident volume component (0-30): scaled logarithmically so large spikes
+            //   don't saturate the score (log scale with a 10k cap for normalization).
+            // If avg CVSS is not available, exposureScore falls back to incident-only signal.
+            let exposureScore = null;
+            if (weightedAvgCvss != null) {
+              const cvssComponent = (weightedAvgCvss / 10) * 70;
+              const incidentComponent = totalIncidents ? Math.min(30, (Math.log(totalIncidents + 1) / Math.log(10000 + 1)) * 30) : 0;
+              exposureScore = Math.round(cvssComponent + incidentComponent);
+            } else if (totalIncidents) {
+              exposureScore = Math.round(Math.min(100, (Math.log(totalIncidents + 1) / Math.log(10000 + 1)) * 100));
+            }
+
+            // Build metrics payload scoped to the United States (national aggregation)
+            const metricsPayload = {
+              totalIncidents: totalIncidents || 0,
+              averageLoss: null, // requires impact/loss data upstream (not available in heatmap)
+              exposureScore: exposureScore,
+              kevActiveExploits: totalExploits || 0,
+              // Simpler KPIs derived from national aggregation
+              // Top-5 concentration: percent of national incidents occurring in the top 5 states
+              top5ConcentrationPercent: (function() {
+                try {
+                  if (!totalIncidents) return 0;
+                  const topN = 5;
+                  const sorted = items.slice().sort((a,b)=>b.total_cves - a.total_cves);
+                  const topSum = sorted.slice(0, topN).reduce((s, it) => s + (it.total_cves || 0), 0);
+                  return Math.round((topSum / totalIncidents) * 100);
+                } catch (e) { return null; }
+              })(),
+              // Active states percent: percent of states with at least one incident
+              activeStatesPercent: (function() {
+                try {
+                  const totalStates = items.length || 0;
+                  if (!totalStates) return 0;
+                  const active = items.filter(it => (it.total_cves || 0) > 0).length;
+                  return Math.round((active / totalStates) * 100);
+                } catch (e) { return null; }
+              })(),
+              // Store the weighted average CVSS used in exposure computations so the UI
+              // can show it or make display decisions (e.g., whether CVSS data exists).
+              weightedAvgCvss: weightedAvgCvss,
+            };
+            console.debug('AppContext: computed metrics from heatmap:', metricsPayload);
+            actions.setMetrics(metricsPayload);
+            _metricsLoaded = true;
+          }
+        } catch (e) {
+          console.error('AppContext metrics derivation error:', e);
+        }
+      } catch (e) {
+        console.error('AppContext heatmapLoaded handler error:', e);
+      }
+    };
+
+    window.addEventListener('heatmapLoaded', handler);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('heatmapLoaded', handler);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
@@ -295,6 +416,7 @@ export const useInsights = () => {
   return {
     insights: state.insights,
     updateInsights: actions.updateInsights,
+    reloadInsights: actions.reloadInsights,
   };
 };
 

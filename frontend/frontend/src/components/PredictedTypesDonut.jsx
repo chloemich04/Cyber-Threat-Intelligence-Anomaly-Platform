@@ -6,7 +6,15 @@ export default function PredictedTypesDonut({ predictedTypes }) {
   const data = (predictedTypes || []).map(pt => ({ name: pt.threat_type, value: Math.max(0, pt.probability || 0) }));
 
   // Choose a color palette fallback
-  const palette = ['#3b82f6', '#f97316', '#ef4444', '#a78bfa', '#10b981', '#f59e0b'];
+  const palette = [
+    '#9d00ffff', 
+    '#e2b3ffff', 
+    '#482563ff',
+    '#7f648fff', 
+    '#48276fff',
+    '#e5d3f0ff', 
+    '#2b2632ff',
+  ];
 
   // Slightly smaller outerRadius and increased wrapper height to make room for legend below
   return (
@@ -23,6 +31,7 @@ function DonutWrapper({ data, palette }) {
     'Vulnerability Disclosure': 'Public disclosure of vulnerabilities which can increase exploit risk if not patched promptly.',
     'Phishing': 'Social-engineering attacks aimed at tricking users into revealing credentials or executing malicious actions.',
     'Ransomware': 'Malware that encrypts data and demands payment; typically high-impact for operations.',
+    'Vulnerability': 'Weakness in a system\'s hardware, software, or procedures that a cyber attacker can exploit to gain unauthorized access, steal data, or cause damage.',
     'Default': 'No description available for this threat type.'
   };
 
@@ -33,26 +42,26 @@ function DonutWrapper({ data, palette }) {
   const handlePieLeave = () => setHovered(null);
 
   return (
-    <div style={{ width: '100%', height: 320, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ width: '100%', height: 260 }}>
+    <div style={{ width: '100%', height: '280px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '8px 0', overflow: 'hidden' }}>
+      <div style={{ width: '100%', height: '190px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '10px' }}>
         <DonutChart
           data={data}
           colors={palette}
-          innerRadius={60}
-          outerRadius={80}
-          height={260}
+          innerRadius={40}
+          outerRadius={65}
+          height={200}
           onPieEnter={handlePieEnter}
           onPieLeave={handlePieLeave}
         />
       </div>
 
-      <div style={{ width: '100%', maxWidth: 360, marginTop: 8 }}>
+      <div style={{ width: '100%', maxWidth: '95%', marginTop: 8, minHeight: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {hovered ? (
-          <div style={{ color: 'var(--muted)', fontSize: 14 }}>
-            <strong>{hovered}:</strong> {descriptions[hovered] || descriptions['Default']}
+          <div style={{ color: '#94a3b8', fontSize: 11, textAlign: 'center' }}>
+            <strong style={{ color: '#e5e7eb' }}>{hovered}:</strong> {descriptions[hovered] || descriptions['Default']}
           </div>
         ) : (
-          <div style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center' }}>
+          <div style={{ color: '#94a3b8', fontSize: 10, textAlign: 'center' }}>
             Hover a slice to see a short description of the threat type.
           </div>
         )}

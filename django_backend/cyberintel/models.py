@@ -43,6 +43,18 @@ class CveCountsByRegionEpss(models.Model):
         #managed = False
         db_table = 'cve_counts_by_region_epss'
 
+class IspCountsByRegion(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    region_code = models.TextField(blank=True, null=True)
+    isp = models.TextField(blank=True, null=True)
+    cnt = models.BigIntegerField()
+    rank_per_state_isp = models.IntegerField()
+
+    class Meta:
+        #managed = False
+        db_table = 'isp_counts_by_region'
+
+
 
 class NvdDataLimited(models.Model):
     # The underlying table has an `id` column; declare it as primary key here
@@ -70,3 +82,20 @@ class CweSoftwareLimited(models.Model):
     class Meta:
         managed = False
         db_table = 'cwe_software_development'
+
+
+class Contact(models.Model):
+    """
+    Stores submissions from the frontend Contact Us form.
+    """
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Contact({self.name} <{self.email}>)"
+
+    class Meta:
+        ordering = ['-created_at']

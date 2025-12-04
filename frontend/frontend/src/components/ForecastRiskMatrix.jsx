@@ -80,7 +80,7 @@ export default function ForecastRiskMatrix({ predictions = [], height = 260 }) {
     if (!active || !payload || payload.length === 0) return null;
     const p = payload[0].payload;
     return (
-      <div style={{ background: 'var(--panel-2)', padding: 8, borderRadius: 6, border: '1px solid var(--border)', color: 'var(--text)' }}>
+      <div style={{ background: 'var(--panel-2)', padding: 8, borderRadius: 6, border: '1px solid #1f2937', color: 'var(--text)' }}>
         <div style={{ fontWeight: 700 }}>{new Date(p.week_start).toLocaleDateString()}</div>
         <div>Expected: <strong>{p.expected}</strong></div>
         <div>Confidence: <strong>{Math.round(p.y * 100)}%</strong></div>
@@ -104,7 +104,7 @@ export default function ForecastRiskMatrix({ predictions = [], height = 260 }) {
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
           <XAxis type="number" dataKey="x" name="Impact" tick={{ fill: 'var(--muted)' }} />
           <YAxis type="number" dataKey="y" name="Confidence" domain={[0, 1]} tickFormatter={(v) => `${Math.round(v * 100)}%`} tick={{ fill: 'var(--muted)' }} />
-          <Tooltip cursor={{ stroke: 'rgba(255,255,255,0.06)', strokeWidth: 1 }} content={customTooltip} />
+          <Tooltip cursor={{ border: '1px solid #1f2937', strokeWidth: 1 }} content={customTooltip} />
 
           {/* Reference lines to split quadrants */}
           <ReferenceLine x={impactMedian} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
@@ -112,11 +112,11 @@ export default function ForecastRiskMatrix({ predictions = [], height = 260 }) {
 
           {/* Render non-highlighted points first */}
           {otherData && otherData.length > 0 && (
-            <Scatter name="Predictions" data={otherData} fill="#ef4444" onClick={(d) => handlePointClick(d)} />
+            <Scatter name="Predictions" data={otherData} fill='#9d00ffff' onClick={(d) => handlePointClick(d)} />
           )}
           {/* Render highlighted points on top with a distinct color/size */}
           {highlightedData && highlightedData.length > 0 && (
-            <Scatter name="Highlighted" data={highlightedData} fill="#38bdf8" onClick={(d) => handlePointClick(d)} />
+            <Scatter name="Highlighted" data={highlightedData} fill="#1d5872ff" onClick={(d) => handlePointClick(d)} />
           )}
         </ScatterChart>
       </ResponsiveContainer>
