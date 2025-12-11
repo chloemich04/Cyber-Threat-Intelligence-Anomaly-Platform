@@ -154,7 +154,7 @@ export default function TabbedGraphs() {
           The Internet Provider Rankings chart displays the top states by total cyber incident count, or when a state is selected, shows the top Internet Service Providers (ISPs) within that state.
         </p>
         <ul style={{ marginTop: 8 }}>
-          <li><strong>What it shows:</strong> Top 10 states by incident volume (default view), or top ISPs for a selected state with their incident counts.</li>
+          <li><strong>What it shows:</strong> Top 5 states by incident volume (default view), or top ISPs for a selected state with their incident counts.</li>
           <li><strong>How to use:</strong> Click a state on the heatmap to drill down into ISP-level data. The chart dynamically switches between state-level and ISP-level views.</li>
           <li><strong>Limitations:</strong> ISP data is based on network attribution and may not reflect the actual victim organization. Some incidents may be attributed to hosting providers or VPN services rather than end-user ISPs.</li>
         </ul>

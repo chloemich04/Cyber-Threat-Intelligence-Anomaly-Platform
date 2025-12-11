@@ -387,7 +387,7 @@ const PDFExport = ({ forecastData }) => {
       const chartConfigs = [
         { id: 'predicted-donut', option: 'includePredictedThreatTypes', title: 'Predicted Threat Types' },
         { id: 'key-signals-bar-chart', option: 'includeKeySignals', title: 'Key Signals' },
-        { id: 'risk-matrix', option: 'includeRiskMatrix', title: 'Risk Matrix — Confidence vs Impact' },
+        { id: 'risk-matrix', option: 'includeRiskMatrix', title: 'Confidence vs Impact' },
       ];
 
       const selectedCharts = chartConfigs.filter(chart => exportOptions[chart.option]);
@@ -581,7 +581,7 @@ const PDFExport = ({ forecastData }) => {
                       checked={exportOptions.includeRiskMatrix}
                       onChange={() => handleCheckboxChange('includeRiskMatrix')}
                     />
-                    <span>Risk Matrix — Confidence vs Impact</span>
+                    <span>Confidence vs Impact</span>
                   </label>
                 </div>
               </div>

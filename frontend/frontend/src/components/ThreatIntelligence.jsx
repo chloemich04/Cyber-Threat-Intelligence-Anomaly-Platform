@@ -304,7 +304,7 @@ export default function ThreatIntelligence() {
             <li><strong>Limitations:</strong> categories are model-derived and depend on the quality of input signals; validate with telemetry and incident data.</li>
           </ul>
           <p style={{ marginTop: 8 }}>
-            Combine this view with key signals and the risk matrix to focus investigations on high-impact, high-confidence threat types.
+            Combine this view with key signals to focus investigations on high-impact, high-confidence threat types.
           </p>
         </InfoModal>
 
@@ -323,9 +323,9 @@ export default function ThreatIntelligence() {
           </p>
         </InfoModal>
 
-        <InfoModal open={showRiskMatrixInfo} onClose={() => setShowRiskMatrixInfo(false)} title="Risk Matrix — Confidence vs Impact">
+        <InfoModal open={showRiskMatrixInfo} onClose={() => setShowRiskMatrixInfo(false)} title="Confidence vs Impact">
           <p>
-            The risk matrix plots each forecasted week by expected impact (x-axis) and model confidence (y-axis). Points in the top-right
+            The graph plots each forecasted week by expected impact (x-axis) and model confidence (y-axis). Points in the top-right
             quadrant represent high-impact, high-confidence items that are strong candidates for prioritization.
           </p>
           <ul style={{ marginTop: 8 }}>
@@ -334,7 +334,7 @@ export default function ThreatIntelligence() {
             <li><strong>Visualization tip:</strong> hover or click points to see details and drill into associated signals and CVEs.</li>
           </ul>
           <p style={{ marginTop: 8 }}>
-            The risk matrix is a triage aid — combine it with business context to set appropriate response levels.
+            The graph is a triage aid — combine it with business context to set appropriate response levels.
           </p>
         </InfoModal>
 
@@ -418,10 +418,10 @@ export default function ThreatIntelligence() {
             <div className="chart-box" aria-label="risk-matrix" data-chart-id="risk-matrix">
               <div className="chart-header">
                 <div style={{ display: 'flex', alignItems: 'center'}}>
-                  <h3 className="chart-title" style={{ margin: 0, lineHeight: 1 }}>Risk Matrix — Confidence vs Impact</h3>
+                  <h3 className="chart-title" style={{ margin: 0, lineHeight: 1 }}>Confidence vs Impact</h3>
                   <button
                     type="button"
-                    title="What the risk matrix means"
+                    title="What the graph means"
                     style={{
                       marginLeft: 8,
                       fontSize: 12,

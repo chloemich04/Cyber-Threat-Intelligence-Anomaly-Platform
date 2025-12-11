@@ -224,7 +224,7 @@ export default function TopStatesDonutChart({ injectedData = null, exportMode = 
   // Determine chart title based on whether a state is selected
   const chartTitle = selectedState 
     ? `Top ISPs per state` 
-    : 'Top 10 States by Total Count';
+    : 'Top 5 States by Total Count';
 
   return (
     <div style={{ width: '100%', height: '280px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '8px 0', overflow: 'hidden' }}>

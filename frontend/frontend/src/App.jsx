@@ -175,7 +175,7 @@ export default function App(){
                         <span className="chip" style={{ marginLeft: 8 }}>{insights.lowestRate || '—'}</span>
                       )}
                     </p>
-                    <p><strong>Notes:</strong> {insights.notes || 'An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions. This vulnerability occurs as a result of computation that reads data that is past the end of the target buffer; the computation is part of the image conversion engine when processing Enhanced Metafile Format (EMF) data that embeds an image in the bitmap (BMP) file format. A successful attack can lead to sensitive data exposure.'}</p>
+                    <p><strong>Notes:</strong> {insights.notes || 'An issue was discovered in Adobe Acrobat Reader 2018.009.20050 and earlier versions. A successful attack can lead to sensitive data exposure.'}</p>
                   </>
                 )}
               </div>
